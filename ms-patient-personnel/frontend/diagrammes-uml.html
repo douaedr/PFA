@@ -1,0 +1,982 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<title>Diagrammes UML — ms-patient-personnel</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/mermaid/10.6.1/mermaid.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap');
+  :root {
+    --bg: #f0f4f8;
+    --white: #ffffff;
+    --navy: #0a2540;
+    --blue: #1a56db;
+    --light-blue: #ebf3ff;
+    --accent: #00b4d8;
+    --green: #0d9488;
+    --purple: #7c3aed;
+    --orange: #ea580c;
+    --border: #e2e8f0;
+    --text: #1e293b;
+    --muted: #64748b;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: 'Outfit', sans-serif; }
+
+  /* HEADER */
+  header {
+    background: var(--navy);
+    color: white;
+    padding: 3rem;
+    text-align: center;
+  }
+  header h1 { font-size: 2.5rem; font-weight: 800; margin-bottom: 0.5rem; }
+  header p { color: #94a3b8; font-size: 1rem; }
+  .header-badges { display: flex; gap: 0.8rem; justify-content: center; margin-top: 1.5rem; flex-wrap: wrap; }
+  .badge { padding: 0.3rem 1rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600; }
+  .badge-blue { background: #1a56db33; color: #93c5fd; border: 1px solid #1a56db55; }
+
+  /* NAV TABS */
+  .tabs-wrapper { background: var(--white); border-bottom: 2px solid var(--border); position: sticky; top: 0; z-index: 100; overflow-x: auto; }
+  .tabs { display: flex; padding: 0 2rem; gap: 0; min-width: max-content; }
+  .tab { padding: 1rem 1.5rem; font-weight: 600; font-size: 0.85rem; cursor: pointer; border-bottom: 3px solid transparent; color: var(--muted); white-space: nowrap; transition: all 0.2s; }
+  .tab:hover { color: var(--blue); background: var(--light-blue); }
+  .tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+  /* CONTENT */
+  .content { max-width: 1400px; margin: 0 auto; padding: 2rem; }
+  .diagram-section { display: none; animation: fadeIn 0.3s; }
+  .diagram-section.active { display: block; }
+  @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+  /* DIAGRAM CARD */
+  .diagram-card { background: var(--white); border-radius: 16px; padding: 2rem; margin-bottom: 2rem; box-shadow: 0 1px 3px rgba(0,0,0,0.08); border: 1px solid var(--border); }
+  .diagram-card h2 { font-size: 1.4rem; font-weight: 700; color: var(--navy); margin-bottom: 0.4rem; display: flex; align-items: center; gap: 0.8rem; }
+  .diagram-card .subtitle { color: var(--muted); font-size: 0.9rem; margin-bottom: 1.5rem; padding-bottom: 1rem; border-bottom: 1px solid var(--border); }
+  .mermaid-wrap { background: var(--bg); border-radius: 12px; padding: 1.5rem; overflow-x: auto; }
+
+  /* DESCRIPTION */
+  .description-box { background: var(--light-blue); border-left: 4px solid var(--blue); border-radius: 0 8px 8px 0; padding: 1.2rem 1.5rem; margin-bottom: 1.5rem; }
+  .description-box h3 { font-size: 0.9rem; font-weight: 700; color: var(--blue); margin-bottom: 0.6rem; text-transform: uppercase; letter-spacing: 1px; }
+  .description-box p { font-size: 0.9rem; color: #334155; line-height: 1.7; }
+
+  /* TABLE */
+  table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  th { background: var(--navy); color: white; padding: 0.8rem 1rem; text-align: left; font-weight: 600; }
+  td { padding: 0.7rem 1rem; border-bottom: 1px solid var(--border); }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: var(--light-blue); }
+  .tag { display: inline-block; padding: 0.15rem 0.6rem; border-radius: 4px; font-size: 0.75rem; font-weight: 600; }
+  .tag-pk { background: #fef3c7; color: #92400e; }
+  .tag-fk { background: #ede9fe; color: #5b21b6; }
+  .tag-nn { background: #dcfce7; color: #14532d; }
+  .tag-uq { background: #fce7f3; color: #831843; }
+
+  /* GRID */
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; }
+  @media (max-width: 900px) { .grid-2 { grid-template-columns: 1fr; } }
+
+  /* STEP SEQUENCE */
+  .sequence-step { display: flex; gap: 1rem; padding: 0.8rem; border-radius: 8px; margin-bottom: 0.5rem; align-items: flex-start; }
+  .step-num { background: var(--navy); color: white; width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 700; flex-shrink: 0; }
+  .step-content { font-size: 0.88rem; line-height: 1.5; }
+  .step-content strong { color: var(--navy); }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>📊 Diagrammes UML</h1>
+  <p>ms-patient-personnel · Système Hospitalier · Spring Boot 3</p>
+  <div class="header-badges">
+    <span class="badge badge-blue">Use Case</span>
+    <span class="badge badge-blue">Diag. Contexte</span>
+    <span class="badge badge-blue">Diag. Classes</span>
+    <span class="badge badge-blue">MCD</span>
+    <span class="badge badge-blue">MLD</span>
+    <span class="badge badge-blue">Diag. Séquence</span>
+    <span class="badge badge-blue">Dépendances</span>
+    <span class="badge badge-blue">Descriptions Textuelles</span>
+  </div>
+</header>
+
+<div class="tabs-wrapper">
+  <div class="tabs">
+    <div class="tab active" onclick="showTab('usecase')">1. Use Case</div>
+    <div class="tab" onclick="showTab('contexte')">2. Contexte</div>
+    <div class="tab" onclick="showTab('classes')">3. Diag. Classes</div>
+    <div class="tab" onclick="showTab('mcd')">4. MCD</div>
+    <div class="tab" onclick="showTab('mld')">5. MLD</div>
+    <div class="tab" onclick="showTab('sequence')">6. Séquences</div>
+    <div class="tab" onclick="showTab('dependances')">7. Dépendances</div>
+    <div class="tab" onclick="showTab('descriptions')">8. Descriptions</div>
+  </div>
+</div>
+
+<div class="content">
+
+<!-- =================== USE CASE =================== -->
+<div id="tab-usecase" class="diagram-section active">
+  <div class="diagram-card">
+    <h2>📌 Diagramme de Cas d'Utilisation</h2>
+    <p class="subtitle">Interactions entre les acteurs et les fonctionnalités du microservice patient</p>
+    <div class="description-box">
+      <h3>Description</h3>
+      <p>Ce diagramme identifie 4 acteurs principaux : <strong>Médecin</strong>, <strong>Infirmier</strong>, <strong>Administrateur</strong> et <strong>Système Externe</strong> (autres microservices). Chaque acteur dispose de droits spécifiques sur la gestion du dossier patient.</p>
+    </div>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+flowchart LR
+    subgraph Acteurs
+        A1["👨‍⚕️ Médecin"]
+        A2["👩‍⚕️ Infirmier"]
+        A3["🔧 Administrateur"]
+        A4["🌐 Système Externe"]
+    end
+
+    subgraph UC["Cas d'Utilisation — ms-patient-personnel"]
+        direction TB
+        UC1["📋 Créer un patient"]
+        UC2["🔍 Rechercher un patient"]
+        UC3["✏️ Modifier un patient"]
+        UC4["🗑️ Supprimer un patient"]
+        UC5["📁 Consulter dossier médical"]
+        UC6["➕ Ajouter une consultation"]
+        UC7["💊 Gérer ordonnance"]
+        UC8["🔬 Enregistrer analyse labo"]
+        UC9["🏥 Gérer hospitalisation"]
+        UC10["📷 Enregistrer radiologie"]
+        UC11["📜 Créer certificat médical"]
+        UC12["⚕️ Gérer antécédents"]
+        UC13["📊 Voir statistiques"]
+        UC14["🔄 Synchroniser données"]
+    end
+
+    A1 --> UC1
+    A1 --> UC2
+    A1 --> UC3
+    A1 --> UC5
+    A1 --> UC6
+    A1 --> UC7
+    A1 --> UC8
+    A1 --> UC9
+    A1 --> UC10
+    A1 --> UC11
+    A1 --> UC12
+
+    A2 --> UC2
+    A2 --> UC5
+    A2 --> UC8
+    A2 --> UC9
+
+    A3 --> UC1
+    A3 --> UC2
+    A3 --> UC3
+    A3 --> UC4
+    A3 --> UC13
+
+    A4 --> UC2
+    A4 --> UC14
+
+    style UC1 fill:#dbeafe,stroke:#3b82f6
+    style UC5 fill:#dcfce7,stroke:#22c55e
+    style UC6 fill:#fef3c7,stroke:#f59e0b
+    style UC13 fill:#ede9fe,stroke:#8b5cf6
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>📝 Description Textuelle des Cas d'Utilisation</h2>
+    <table>
+      <tr><th>Cas d'utilisation</th><th>Acteur</th><th>Précondition</th><th>Scénario principal</th><th>Post-condition</th></tr>
+      <tr><td><strong>Créer patient</strong></td><td>Admin / Médecin</td><td>CIN inexistant en BDD</td><td>Saisie infos → Validation → Création dossier auto → Sauvegarde</td><td>Patient créé + Dossier médical initialisé</td></tr>
+      <tr><td><strong>Rechercher patient</strong></td><td>Tous</td><td>Utilisateur authentifié</td><td>Saisie critère → Requête BDD → Résultats paginés</td><td>Liste de patients retournée</td></tr>
+      <tr><td><strong>Ajouter consultation</strong></td><td>Médecin</td><td>Patient existant</td><td>Sélection patient → Saisie données cliniques → Liaison médecin → Sauvegarde</td><td>Consultation enregistrée dans dossier</td></tr>
+      <tr><td><strong>Gérer ordonnance</strong></td><td>Médecin</td><td>Patient existant</td><td>Sélection patient → Ajout médicaments → Définition posologie → Sauvegarde</td><td>Ordonnance créée et liée au dossier</td></tr>
+      <tr><td><strong>Gérer hospitalisation</strong></td><td>Médecin</td><td>Service & chambre disponibles</td><td>Admission → Saisie motif → Assignation service → Suivi → Sortie</td><td>Hospitalisation enregistrée</td></tr>
+    </table>
+  </div>
+</div>
+
+<!-- =================== CONTEXTE =================== -->
+<div id="tab-contexte" class="diagram-section">
+  <div class="diagram-card">
+    <h2>🌐 Diagramme de Contexte</h2>
+    <p class="subtitle">Positionnement du microservice ms-patient dans l'écosystème hospitalier</p>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+graph TB
+    subgraph Externe["Acteurs & Systèmes Externes"]
+        U1["👨‍⚕️ Médecin\n(Frontend)"]
+        U2["👩‍⚕️ Infirmier\n(Frontend)"]
+        U3["🔧 Admin\n(Frontend)"]
+    end
+
+    subgraph MS["Microservices Hospitaliers"]
+        MsPersonnel["👥 ms-personnel\n(Médecins & Staff)"]
+        MsPatient["🏥 ms-patient-personnel\n─────────────\nGestion Patients\nDossiers Médicaux\nConsultations\nOrdonnances\nHospitalisations"]
+        MsRendezVous["📅 ms-rendez-vous\n(Planning)"]
+        MsFacturation["💰 ms-facturation\n(Facturation)"]
+        MsPharmacie["💊 ms-pharmacie\n(Stock Médicaments)"]
+    end
+
+    subgraph Infra["Infrastructure"]
+        GW["🔀 API Gateway\n(port 8080)"]
+        DB[("🗄️ MySQL\nms_patient_db")]
+        Eureka["🔍 Eureka\nService Discovery"]
+    end
+
+    U1 -- "HTTP REST" --> GW
+    U2 -- "HTTP REST" --> GW
+    U3 -- "HTTP REST" --> GW
+    GW -- "Route /patients/**" --> MsPatient
+    MsPatient -- "JDBC" --> DB
+    MsPatient -- "Ref. medecin_id" --> MsPersonnel
+    MsPatient -- "patient_id" --> MsRendezVous
+    MsPatient -- "patient_id" --> MsFacturation
+    MsPatient -- "médicaments" --> MsPharmacie
+    MsPatient -- "Register" --> Eureka
+
+    style MsPatient fill:#dbeafe,stroke:#3b82f6,stroke-width:3px
+    style GW fill:#fef3c7,stroke:#f59e0b
+    style DB fill:#dcfce7,stroke:#22c55e
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== CLASSES =================== -->
+<div id="tab-classes" class="diagram-section">
+  <div class="diagram-card">
+    <h2>🗂️ Diagramme de Classes</h2>
+    <p class="subtitle">Structure complète des classes Java du domaine</p>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+classDiagram
+    class Patient {
+        +Long id
+        +String nom
+        +String prenom
+        +String cin
+        +LocalDate dateNaissance
+        +Sexe sexe
+        +GroupeSanguin groupeSanguin
+        +String telephone
+        +String email
+        +String adresse
+        +String ville
+        +String mutuelle
+        +String numeroCNSS
+        +LocalDateTime createdAt
+        +LocalDateTime updatedAt
+    }
+
+    class DossierMedical {
+        +Long id
+        +String numeroDossier
+        +LocalDateTime dateCreation
+        +generateNumeroDossier()
+    }
+
+    class Consultation {
+        +Long id
+        +LocalDateTime dateConsultation
+        +String motif
+        +String diagnostic
+        +String observations
+        +String traitement
+        +Double poids
+        +Double taille
+        +Integer tensionSystolique
+        +Integer tensionDiastolique
+        +Double temperature
+    }
+
+    class Ordonnance {
+        +Long id
+        +LocalDate dateOrdonnance
+        +TypeOrdonnance typeOrdonnance
+        +String instructions
+        +Boolean estRenouvele
+        +LocalDate dateExpiration
+    }
+
+    class LigneOrdonnance {
+        +Long id
+        +String medicament
+        +String dosage
+        +String posologie
+        +Integer dureeJours
+        +Integer quantite
+    }
+
+    class Antecedent {
+        +Long id
+        +TypeAntecedent typeAntecedent
+        +String description
+        +LocalDate dateDiagnostic
+        +NiveauSeverite severite
+        +Boolean actif
+    }
+
+    class AnalyseLaboratoire {
+        +Long id
+        +LocalDate dateAnalyse
+        +String typeAnalyse
+        +String resultats
+        +StatutAnalyse statut
+        +NiveauSeverite severite
+        +String laboratoire
+    }
+
+    class Radiologie {
+        +Long id
+        +LocalDate dateExamen
+        +TypeExamen typeExamen
+        +String description
+        +String conclusion
+        +String cheminFichier
+    }
+
+    class CertificatMedical {
+        +Long id
+        +TypeCertificat typeCertificat
+        +LocalDate dateEmission
+        +String contenu
+        +Integer dureeJours
+    }
+
+    class Hospitalisation {
+        +Long id
+        +LocalDate dateEntree
+        +LocalDate dateSortie
+        +String motif
+        +String diagnostic
+        +String numeroChambre
+        +Boolean actif
+    }
+
+    class Medecin {
+        +Long id
+        +String nom
+        +String prenom
+        +String matricule
+    }
+
+    class Service {
+        +Long id
+        +String nom
+        +String code
+        +String description
+    }
+
+    class Specialite {
+        +Long id
+        +String nom
+        +String code
+    }
+
+    Patient "1" --> "1" DossierMedical : possède
+    DossierMedical "1" --> "0..*" Consultation : contient
+    DossierMedical "1" --> "0..*" Antecedent : liste
+    DossierMedical "1" --> "0..*" Ordonnance : comprend
+    DossierMedical "1" --> "0..*" AnalyseLaboratoire : inclut
+    DossierMedical "1" --> "0..*" Radiologie : inclut
+    DossierMedical "1" --> "0..*" Hospitalisation : contient
+    DossierMedical "1" --> "0..*" CertificatMedical : contient
+    Ordonnance "1" --> "1..*" LigneOrdonnance : comporte
+    Consultation "0..*" --> "1" Medecin : réalisée par
+    Ordonnance "0..*" --> "1" Medecin : prescrite par
+    Hospitalisation "0..*" --> "1" Service : dans
+    Hospitalisation "0..*" --> "1" Medecin : supervisée par
+    Medecin "0..*" --> "1" Specialite : a
+    Medecin "0..*" --> "1" Service : appartient à
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MCD =================== -->
+<div id="tab-mcd" class="diagram-section">
+  <div class="diagram-card">
+    <h2>🔷 MCD — Modèle Conceptuel de Données</h2>
+    <p class="subtitle">Représentation des entités, attributs et associations (cardinalités conceptuelles)</p>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+erDiagram
+    PATIENT {
+        Long id PK
+        String nom
+        String prenom
+        String cin UK
+        Date dateNaissance
+        Enum sexe
+        Enum groupeSanguin
+        String telephone
+        String email
+        String adresse
+        String ville
+        String mutuelle
+        String numeroCNSS
+        DateTime createdAt
+    }
+
+    DOSSIER_MEDICAL {
+        Long id PK
+        String numeroDossier UK
+        DateTime dateCreation
+    }
+
+    CONSULTATION {
+        Long id PK
+        DateTime dateConsultation
+        String motif
+        String diagnostic
+        String observations
+        String traitement
+        Double poids
+        Double taille
+        Int tensionSystolique
+        Int tensionDiastolique
+        Double temperature
+    }
+
+    ANTECEDENT {
+        Long id PK
+        Enum typeAntecedent
+        String description
+        Date dateDiagnostic
+        Enum severite
+        Boolean actif
+    }
+
+    ORDONNANCE {
+        Long id PK
+        Date dateOrdonnance
+        Enum typeOrdonnance
+        String instructions
+        Boolean estRenouvele
+        Date dateExpiration
+    }
+
+    LIGNE_ORDONNANCE {
+        Long id PK
+        String medicament
+        String dosage
+        String posologie
+        Int dureeJours
+        Int quantite
+    }
+
+    ANALYSE_LABORATOIRE {
+        Long id PK
+        Date dateAnalyse
+        String typeAnalyse
+        String resultats
+        Enum statut
+        Enum severite
+        String laboratoire
+    }
+
+    RADIOLOGIE {
+        Long id PK
+        Date dateExamen
+        Enum typeExamen
+        String description
+        String conclusion
+    }
+
+    HOSPITALISATION {
+        Long id PK
+        Date dateEntree
+        Date dateSortie
+        String motif
+        String numeroChambre
+        Boolean actif
+    }
+
+    CERTIFICAT_MEDICAL {
+        Long id PK
+        Enum typeCertificat
+        Date dateEmission
+        String contenu
+        Int dureeJours
+    }
+
+    MEDECIN {
+        Long id PK
+        String nom
+        String prenom
+        String matricule
+    }
+
+    SERVICE {
+        Long id PK
+        String nom
+        String code
+    }
+
+    SPECIALITE {
+        Long id PK
+        String nom
+        String code
+    }
+
+    PATIENT ||--|| DOSSIER_MEDICAL : "possède"
+    DOSSIER_MEDICAL ||--o{ CONSULTATION : "contient"
+    DOSSIER_MEDICAL ||--o{ ANTECEDENT : "liste"
+    DOSSIER_MEDICAL ||--o{ ORDONNANCE : "comprend"
+    DOSSIER_MEDICAL ||--o{ ANALYSE_LABORATOIRE : "inclut"
+    DOSSIER_MEDICAL ||--o{ RADIOLOGIE : "inclut"
+    DOSSIER_MEDICAL ||--o{ HOSPITALISATION : "comporte"
+    DOSSIER_MEDICAL ||--o{ CERTIFICAT_MEDICAL : "contient"
+    ORDONNANCE ||--|{ LIGNE_ORDONNANCE : "comporte"
+    CONSULTATION }o--|| MEDECIN : "réalisée par"
+    ORDONNANCE }o--|| MEDECIN : "prescrite par"
+    HOSPITALISATION }o--|| SERVICE : "dans"
+    HOSPITALISATION }o--|| MEDECIN : "supervisée par"
+    MEDECIN }o--|| SPECIALITE : "a"
+    MEDECIN }o--|| SERVICE : "appartient à"
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== MLD =================== -->
+<div id="tab-mld" class="diagram-section">
+  <div class="diagram-card">
+    <h2>📐 MLD — Modèle Logique de Données</h2>
+    <p class="subtitle">Traduction du MCD en tables relationnelles avec clés primaires et étrangères</p>
+
+    <div class="grid-2">
+      <div>
+        <h3 style="color:var(--navy);margin-bottom:1rem;font-size:1rem;">Tables principales</h3>
+        <table>
+          <tr><th colspan="3">TABLE: patients</th></tr>
+          <tr><td><strong>id</strong></td><td>BIGINT AUTO_INCREMENT</td><td><span class="tag tag-pk">PK</span></td></tr>
+          <tr><td>nom</td><td>VARCHAR(100)</td><td><span class="tag tag-nn">NOT NULL</span></td></tr>
+          <tr><td>prenom</td><td>VARCHAR(100)</td><td><span class="tag tag-nn">NOT NULL</span></td></tr>
+          <tr><td>cin</td><td>VARCHAR(20)</td><td><span class="tag tag-uq">UNIQUE</span> <span class="tag tag-nn">NOT NULL</span></td></tr>
+          <tr><td>date_naissance</td><td>DATE</td><td><span class="tag tag-nn">NOT NULL</span></td></tr>
+          <tr><td>sexe</td><td>ENUM</td><td></td></tr>
+          <tr><td>groupe_sanguin</td><td>ENUM</td><td></td></tr>
+          <tr><td>telephone</td><td>VARCHAR(20)</td><td></td></tr>
+          <tr><td>email</td><td>VARCHAR(150)</td><td></td></tr>
+          <tr><td>adresse</td><td>VARCHAR(255)</td><td></td></tr>
+          <tr><td>ville</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>mutuelle</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>numero_cnss</td><td>VARCHAR(50)</td><td></td></tr>
+          <tr><td><strong>dossier_medical_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → dossiers_medicaux</span></td></tr>
+          <tr><td>created_at</td><td>DATETIME</td><td></td></tr>
+          <tr><td>updated_at</td><td>DATETIME</td><td></td></tr>
+        </table>
+      </div>
+      <div>
+        <h3 style="color:var(--navy);margin-bottom:1rem;font-size:1rem;"> </h3>
+        <table>
+          <tr><th colspan="3">TABLE: dossiers_medicaux</th></tr>
+          <tr><td><strong>id</strong></td><td>BIGINT AUTO_INCREMENT</td><td><span class="tag tag-pk">PK</span></td></tr>
+          <tr><td>numero_dossier</td><td>VARCHAR(30)</td><td><span class="tag tag-uq">UNIQUE</span> <span class="tag tag-nn">NOT NULL</span></td></tr>
+          <tr><td>date_creation</td><td>DATETIME</td><td></td></tr>
+        </table>
+        <br>
+        <table>
+          <tr><th colspan="3">TABLE: consultations</th></tr>
+          <tr><td><strong>id</strong></td><td>BIGINT AUTO_INCREMENT</td><td><span class="tag tag-pk">PK</span></td></tr>
+          <tr><td>date_consultation</td><td>DATETIME</td><td><span class="tag tag-nn">NOT NULL</span></td></tr>
+          <tr><td>motif</td><td>VARCHAR(255)</td><td></td></tr>
+          <tr><td>diagnostic</td><td>TEXT</td><td></td></tr>
+          <tr><td>observations</td><td>TEXT</td><td></td></tr>
+          <tr><td>traitement</td><td>TEXT</td><td></td></tr>
+          <tr><td>poids</td><td>DOUBLE</td><td></td></tr>
+          <tr><td>taille</td><td>DOUBLE</td><td></td></tr>
+          <tr><td>tension_systolique</td><td>INT</td><td></td></tr>
+          <tr><td>tension_diastolique</td><td>INT</td><td></td></tr>
+          <tr><td>temperature</td><td>DOUBLE</td><td></td></tr>
+          <tr><td><strong>dossier_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → dossiers_medicaux</span></td></tr>
+          <tr><td><strong>medecin_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → medecins_ref</span></td></tr>
+        </table>
+      </div>
+    </div>
+
+    <br>
+    <div class="grid-2">
+      <div>
+        <table>
+          <tr><th colspan="3">TABLE: ordonnances</th></tr>
+          <tr><td><strong>id</strong></td><td>BIGINT AUTO_INCREMENT</td><td><span class="tag tag-pk">PK</span></td></tr>
+          <tr><td>date_ordonnance</td><td>DATE</td><td></td></tr>
+          <tr><td>type_ordonnance</td><td>ENUM</td><td></td></tr>
+          <tr><td>instructions</td><td>TEXT</td><td></td></tr>
+          <tr><td>est_renouvele</td><td>BOOLEAN</td><td></td></tr>
+          <tr><td>date_expiration</td><td>DATE</td><td></td></tr>
+          <tr><td><strong>dossier_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → dossiers_medicaux</span></td></tr>
+          <tr><td><strong>medecin_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → medecins_ref</span></td></tr>
+        </table>
+        <br>
+        <table>
+          <tr><th colspan="3">TABLE: lignes_ordonnance</th></tr>
+          <tr><td><strong>id</strong></td><td>BIGINT AUTO_INCREMENT</td><td><span class="tag tag-pk">PK</span></td></tr>
+          <tr><td>medicament</td><td>VARCHAR(200)</td><td><span class="tag tag-nn">NOT NULL</span></td></tr>
+          <tr><td>dosage</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>posologie</td><td>VARCHAR(255)</td><td></td></tr>
+          <tr><td>duree_jours</td><td>INT</td><td></td></tr>
+          <tr><td>quantite</td><td>INT</td><td></td></tr>
+          <tr><td><strong>ordonnance_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → ordonnances</span></td></tr>
+        </table>
+      </div>
+      <div>
+        <table>
+          <tr><th colspan="3">TABLE: hospitalisations</th></tr>
+          <tr><td><strong>id</strong></td><td>BIGINT AUTO_INCREMENT</td><td><span class="tag tag-pk">PK</span></td></tr>
+          <tr><td>date_entree</td><td>DATE</td><td><span class="tag tag-nn">NOT NULL</span></td></tr>
+          <tr><td>date_sortie</td><td>DATE</td><td></td></tr>
+          <tr><td>motif</td><td>VARCHAR(255)</td><td></td></tr>
+          <tr><td>diagnostic</td><td>TEXT</td><td></td></tr>
+          <tr><td>numero_chambre</td><td>VARCHAR(20)</td><td></td></tr>
+          <tr><td>actif</td><td>BOOLEAN</td><td></td></tr>
+          <tr><td>compte_rendu</td><td>TEXT</td><td></td></tr>
+          <tr><td><strong>dossier_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → dossiers_medicaux</span></td></tr>
+          <tr><td><strong>service_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → services</span></td></tr>
+          <tr><td><strong>medecin_responsable_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → medecins_ref</span></td></tr>
+        </table>
+        <br>
+        <table>
+          <tr><th colspan="3">TABLE: medecins_ref</th></tr>
+          <tr><td><strong>id</strong></td><td>BIGINT (pas auto)</td><td><span class="tag tag-pk">PK</span></td></tr>
+          <tr><td>nom</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>prenom</td><td>VARCHAR(100)</td><td></td></tr>
+          <tr><td>matricule</td><td>VARCHAR(50)</td><td></td></tr>
+          <tr><td><strong>specialite_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → specialites</span></td></tr>
+          <tr><td><strong>service_id</strong></td><td>BIGINT</td><td><span class="tag tag-fk">FK → services</span></td></tr>
+          <tr><td>derniere_synchronisation</td><td>DATETIME</td><td></td></tr>
+        </table>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== SEQUENCE =================== -->
+<div id="tab-sequence" class="diagram-section">
+  <div class="diagram-card">
+    <h2>📨 Diagramme de Séquence — Création d'un Patient</h2>
+    <p class="subtitle">Scénario complet : le médecin crée un nouveau patient via le frontend</p>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    actor Medecin
+    participant FE as Frontend React
+    participant GW as API Gateway
+    participant MS as PatientController
+    participant SVC as PatientService
+    participant MAP as PatientMapper
+    participant REPO as PatientRepository
+    participant DB as MySQL
+
+    Medecin->>FE: Remplit formulaire patient
+    FE->>GW: POST /api/v1/patients<br/>{PatientRequestDTO}
+    GW->>MS: Route vers ms-patient:8081
+    MS->>MS: @Valid validation du DTO
+    alt Données invalides
+        MS-->>FE: 400 Bad Request<br/>{erreurs de validation}
+    end
+    MS->>SVC: createPatient(dto)
+    SVC->>REPO: existsByCin(cin)
+    REPO->>DB: SELECT COUNT(*) WHERE cin=?
+    DB-->>REPO: count=0
+    REPO-->>SVC: false
+    SVC->>MAP: toEntity(dto)
+    MAP-->>SVC: Patient entity
+    SVC->>SVC: Crée DossierMedical
+    SVC->>SVC: patient.setDossierMedical(dossier)
+    SVC->>REPO: save(patient)
+    REPO->>DB: INSERT INTO patients...<br/>INSERT INTO dossiers_medicaux...
+    DB-->>REPO: patient (id=1)
+    REPO-->>SVC: Patient sauvegardé
+    SVC->>MAP: toResponseDTO(patient)
+    MAP-->>SVC: PatientResponseDTO
+    SVC-->>MS: PatientResponseDTO
+    MS-->>GW: 201 Created<br/>{PatientResponseDTO}
+    GW-->>FE: 201 Created
+    FE-->>Medecin: ✅ Patient créé avec succès
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>📨 Diagramme de Séquence — Ajouter une Consultation</h2>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    actor Medecin
+    participant FE as Frontend
+    participant MS as ConsultationController
+    participant SVC as ConsultationService
+    participant DOSSIER as DossierMedicalRepository
+    participant CONS as ConsultationRepository
+    participant DB as MySQL
+
+    Medecin->>FE: Ouvre dossier patient, clique "Nouvelle consultation"
+    FE->>MS: POST /api/v1/patients/{id}/consultations<br/>{ConsultationDTO}
+    MS->>SVC: addConsultation(patientId, dto)
+    SVC->>DOSSIER: findByPatientId(patientId)
+    DOSSIER->>DB: SELECT * FROM dossiers_medicaux WHERE patient_id=?
+    DB-->>DOSSIER: dossierMedical
+    DOSSIER-->>SVC: DossierMedical
+    SVC->>SVC: Crée Consultation entity
+    SVC->>SVC: consultation.setMedecin(medecinActuel)
+    SVC->>CONS: save(consultation)
+    CONS->>DB: INSERT INTO consultations...
+    DB-->>CONS: consultation sauvée
+    CONS-->>SVC: ConsultationDTO
+    SVC-->>MS: ConsultationDTO
+    MS-->>FE: 201 Created
+    FE-->>Medecin: ✅ Consultation enregistrée
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>📨 Diagramme de Séquence — Recherche Patient</h2>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+sequenceDiagram
+    actor User
+    participant FE as Frontend
+    participant MS as PatientController
+    participant SVC as PatientService
+    participant REPO as PatientRepository
+    participant DB as MySQL
+
+    User->>FE: Tape "Ali" dans barre de recherche
+    FE->>MS: GET /api/v1/patients/search?q=Ali&page=0&size=10
+    MS->>SVC: searchPatients("Ali", pageable)
+    SVC->>REPO: search("Ali", pageable)
+    REPO->>DB: SELECT * FROM patients WHERE nom LIKE '%Ali%'<br/>OR prenom LIKE '%Ali%' OR cin LIKE '%Ali%'<br/>LIMIT 10 OFFSET 0
+    DB-->>REPO: List patients
+    REPO-->>SVC: Page<Patient>
+    SVC->>SVC: Map chaque patient → PatientResponseDTO
+    SVC-->>MS: Page<PatientResponseDTO>
+    MS-->>FE: 200 OK {content:[], totalElements, totalPages}
+    FE-->>User: Affiche résultats paginés
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== DEPENDANCES =================== -->
+<div id="tab-dependances" class="diagram-section">
+  <div class="diagram-card">
+    <h2>🔗 Diagramme de Dépendances Fonctionnelles</h2>
+    <p class="subtitle">Dépendances entre les composants/couches du microservice</p>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+graph TD
+    subgraph Présentation
+        C1["PatientController"]
+        C2["ConsultationController"]
+        C3["OrdonnanceController"]
+        C4["DossierMedicalController"]
+    end
+
+    subgraph Service
+        S1["PatientService"]
+        S2["ConsultationService"]
+        S3["OrdonnanceService"]
+        S4["DossierMedicalService"]
+    end
+
+    subgraph Mapper
+        M1["PatientMapper"]
+        M2["ConsultationMapper"]
+        M3["DossierMedicalMapper"]
+    end
+
+    subgraph Repository
+        R1["PatientRepository"]
+        R2["ConsultationRepository"]
+        R3["OrdonnanceRepository"]
+        R4["DossierMedicalRepository"]
+        R5["MedecinRepository"]
+    end
+
+    subgraph Domain
+        E1["Patient"]
+        E2["DossierMedical"]
+        E3["Consultation"]
+        E4["Ordonnance"]
+        E5["Medecin"]
+    end
+
+    subgraph DTO
+        D1["PatientRequestDTO\nPatientResponseDTO"]
+        D2["ConsultationDTO"]
+        D3["OrdonnanceDTO"]
+    end
+
+    C1 --> S1
+    C2 --> S2
+    C3 --> S3
+    C4 --> S4
+
+    S1 --> R1
+    S1 --> M1
+    S1 --> R4
+    S2 --> R2
+    S2 --> M2
+    S2 --> R4
+    S3 --> R3
+    S4 --> R4
+    S4 --> M3
+
+    M1 --> E1
+    M1 --> D1
+    M2 --> E3
+    M2 --> D2
+    M3 --> E2
+
+    R1 --> E1
+    R2 --> E3
+    R3 --> E4
+    R4 --> E2
+    R5 --> E5
+
+    S1 --> R5
+    S2 --> R5
+
+    style C1 fill:#dbeafe
+    style S1 fill:#fef3c7
+    style R1 fill:#dcfce7
+    style E1 fill:#ede9fe
+    style D1 fill:#fce7f3
+      </div>
+    </div>
+  </div>
+
+  <div class="diagram-card">
+    <h2>📦 Dépendances entre Packages</h2>
+    <div class="mermaid-wrap">
+      <div class="mermaid">
+graph LR
+    subgraph "com.hospital.patient"
+        P_CTRL["controller"]
+        P_SVC["service"]
+        P_REPO["repository"]
+        P_ENTITY["entity"]
+        P_DTO["dto"]
+        P_MAPPER["mapper"]
+        P_ENUM["enums"]
+        P_CONFIG["config"]
+        P_EX["exception"]
+    end
+
+    P_CTRL --> P_SVC
+    P_CTRL --> P_DTO
+    P_SVC --> P_REPO
+    P_SVC --> P_MAPPER
+    P_SVC --> P_DTO
+    P_SVC --> P_EX
+    P_MAPPER --> P_ENTITY
+    P_MAPPER --> P_DTO
+    P_REPO --> P_ENTITY
+    P_ENTITY --> P_ENUM
+    P_CONFIG --> P_SVC
+    P_CTRL --> P_EX
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- =================== DESCRIPTIONS =================== -->
+<div id="tab-descriptions" class="diagram-section">
+  <div class="diagram-card">
+    <h2>📝 Descriptions Textuelles Complètes</h2>
+    <p class="subtitle">Description textuelle de chaque composant et fonctionnalité du système</p>
+
+    <div style="margin-bottom:2rem;">
+      <h3 style="color:var(--navy);font-size:1.1rem;margin-bottom:1rem;padding:0.6rem;background:var(--light-blue);border-radius:8px;">1. Description du Système Global</h3>
+      <p style="line-height:1.8;color:#334155;">
+        Le microservice <strong>ms-patient-personnel</strong> est un composant du système d'information hospitalier (SIH). Il constitue le cœur du système en centralisant toutes les informations relatives aux patients et à leurs dossiers médicaux. Il expose une API REST conforme aux standards HTTP et est conçu pour fonctionner dans une architecture microservices, communicant avec d'autres services via l'API Gateway. Il utilise une base de données MySQL dédiée, et applique le principe de séparation des responsabilités (couches Controller → Service → Repository).
+      </p>
+    </div>
+
+    <div style="margin-bottom:2rem;">
+      <h3 style="color:var(--navy);font-size:1.1rem;margin-bottom:1rem;padding:0.6rem;background:var(--light-blue);border-radius:8px;">2. Description de l'Entité Patient</h3>
+      <p style="line-height:1.8;color:#334155;">
+        L'entité <strong>Patient</strong> représente une personne prise en charge dans l'hôpital. Elle est identifiée de façon unique par son numéro CIN. À sa création, un <strong>DossierMedical</strong> lui est automatiquement associé (relation OneToOne avec cascade). Le patient stocke ses informations d'identité (nom, prénom, date de naissance, sexe), ses coordonnées (téléphone, email, adresse), ses informations médicales de base (groupe sanguin), et ses informations administratives (mutuelle, CNSS). Les dates de création et mise à jour sont générées automatiquement.
+      </p>
+    </div>
+
+    <div style="margin-bottom:2rem;">
+      <h3 style="color:var(--navy);font-size:1.1rem;margin-bottom:1rem;padding:0.6rem;background:var(--light-blue);border-radius:8px;">3. Description du Dossier Médical</h3>
+      <p style="line-height:1.8;color:#334155;">
+        Le <strong>DossierMedical</strong> est l'agrégat central qui regroupe tout l'historique médical d'un patient. Il contient les collections de : consultations, antécédents, ordonnances, analyses de laboratoire, radiologies, hospitalisations et certificats médicaux. Son numéro de dossier est généré automatiquement via un @PrePersist au format <code>DM-AAAA-NNNNN</code>. Il entretient une relation bidirectionnelle avec l'entité Patient et des relations OneToMany avec toutes les entités médicales.
+      </p>
+    </div>
+
+    <div style="margin-bottom:2rem;">
+      <h3 style="color:var(--navy);font-size:1.1rem;margin-bottom:1rem;padding:0.6rem;background:var(--light-blue);border-radius:8px;">4. Description de la Couche Service</h3>
+      <p style="line-height:1.8;color:#334155;">
+        La couche service contient toute la logique métier. <strong>PatientService</strong> est le service principal qui gère : la création de patients (avec vérification de doublon CIN), la pagination et recherche, la mise à jour, la suppression et les statistiques. Elle délègue la transformation des données aux Mappers et la persistance aux Repositories. Toutes les méthodes de lecture sont annotées <code>@Transactional(readOnly=true)</code> pour optimiser les performances.
+      </p>
+    </div>
+
+    <div style="margin-bottom:2rem;">
+      <h3 style="color:var(--navy);font-size:1.1rem;margin-bottom:1rem;padding:0.6rem;background:var(--light-blue);border-radius:8px;">5. Description des Endpoints REST</h3>
+      <table>
+        <tr><th>Méthode</th><th>URL</th><th>Description</th><th>Rôles</th><th>Code retour</th></tr>
+        <tr><td>POST</td><td>/api/v1/patients</td><td>Créer un patient</td><td>ADMIN, MEDECIN</td><td>201 Created</td></tr>
+        <tr><td>GET</td><td>/api/v1/patients</td><td>Lister (paginé)</td><td>Tous</td><td>200 OK</td></tr>
+        <tr><td>GET</td><td>/api/v1/patients/{id}</td><td>Patient par ID</td><td>Tous</td><td>200 / 404</td></tr>
+        <tr><td>GET</td><td>/api/v1/patients/cin/{cin}</td><td>Patient par CIN</td><td>Tous</td><td>200 / 404</td></tr>
+        <tr><td>GET</td><td>/api/v1/patients/search?q=</td><td>Recherche textuelle</td><td>Tous</td><td>200 OK</td></tr>
+        <tr><td>PUT</td><td>/api/v1/patients/{id}</td><td>Modifier un patient</td><td>ADMIN, MEDECIN</td><td>200 / 404</td></tr>
+        <tr><td>DELETE</td><td>/api/v1/patients/{id}</td><td>Supprimer un patient</td><td>ADMIN</td><td>204 / 404</td></tr>
+        <tr><td>GET</td><td>/api/v1/patients/statistiques</td><td>Stats globales</td><td>ADMIN</td><td>200 OK</td></tr>
+        <tr><td>POST</td><td>/api/v1/patients/{id}/consultations</td><td>Ajouter consultation</td><td>MEDECIN</td><td>201 Created</td></tr>
+        <tr><td>GET</td><td>/api/v1/patients/{id}/dossier</td><td>Dossier complet</td><td>MEDECIN</td><td>200 / 404</td></tr>
+        <tr><td>POST</td><td>/api/v1/patients/{id}/ordonnances</td><td>Créer ordonnance</td><td>MEDECIN</td><td>201 Created</td></tr>
+        <tr><td>POST</td><td>/api/v1/patients/{id}/hospitalisations</td><td>Admettre patient</td><td>MEDECIN</td><td>201 Created</td></tr>
+      </table>
+    </div>
+
+    <div style="margin-bottom:2rem;">
+      <h3 style="color:var(--navy);font-size:1.1rem;margin-bottom:1rem;padding:0.6rem;background:var(--light-blue);border-radius:8px;">6. Description des Relations MCD</h3>
+      <table>
+        <tr><th>Association</th><th>Cardinalité</th><th>Description</th></tr>
+        <tr><td>PATIENT — DOSSIER_MEDICAL</td><td>(1,1) — (1,1)</td><td>Chaque patient a exactement un dossier médical</td></tr>
+        <tr><td>DOSSIER_MEDICAL — CONSULTATION</td><td>(1,1) — (0,N)</td><td>Un dossier contient zéro ou plusieurs consultations</td></tr>
+        <tr><td>DOSSIER_MEDICAL — ORDONNANCE</td><td>(1,1) — (0,N)</td><td>Un dossier comprend zéro ou plusieurs ordonnances</td></tr>
+        <tr><td>ORDONNANCE — LIGNE_ORDONNANCE</td><td>(1,1) — (1,N)</td><td>Une ordonnance comporte au moins une ligne</td></tr>
+        <tr><td>DOSSIER_MEDICAL — HOSPITALISATION</td><td>(1,1) — (0,N)</td><td>Un dossier peut contenir plusieurs hospitalisations</td></tr>
+        <tr><td>CONSULTATION — MEDECIN</td><td>(0,N) — (1,1)</td><td>Plusieurs consultations peuvent être réalisées par un même médecin</td></tr>
+        <tr><td>HOSPITALISATION — SERVICE</td><td>(0,N) — (1,1)</td><td>Plusieurs hospitalisations dans un service</td></tr>
+        <tr><td>MEDECIN — SPECIALITE</td><td>(0,N) — (1,1)</td><td>Un médecin appartient à une spécialité</td></tr>
+      </table>
+    </div>
+  </div>
+</div>
+
+</div><!-- /content -->
+
+<script>
+function showTab(id) {
+  document.querySelectorAll('.diagram-section').forEach(s => s.classList.remove('active'));
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + id).classList.add('active');
+  event.target.classList.add('active');
+}
+
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'default',
+  securityLevel: 'loose',
+  fontFamily: 'Outfit, sans-serif',
+  classDiagram: { useMaxWidth: true },
+  flowchart: { useMaxWidth: true, htmlLabels: true },
+  sequence: { useMaxWidth: true }
+});
+</script>
+</body>
+</html>

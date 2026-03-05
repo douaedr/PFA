@@ -1,0 +1,1051 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GestiPatient — Système de Gestion des Patients</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #f7f9fc;
+  --white: #ffffff;
+  --navy: #0f2040;
+  --navy-light: #1a3a6e;
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --blue-mid: #dbeafe;
+  --teal: #0d9488;
+  --teal-light: #f0fdfa;
+  --amber: #d97706;
+  --amber-light: #fffbeb;
+  --red: #dc2626;
+  --red-light: #fef2f2;
+  --green: #16a34a;
+  --green-light: #f0fdf4;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --sidebar-w: 250px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  flex-shrink: 0;
+  position: relative;
+  z-index: 50;
+}
+.sidebar-logo {
+  padding: 1.5rem 1.2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.logo-icon { width: 36px; height: 36px; background: var(--blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.logo-text { color: white; font-weight: 700; font-size: 1.05rem; }
+.logo-sub { color: rgba(255,255,255,0.4); font-size: 0.7rem; }
+
+.sidebar-nav { flex: 1; padding: 1rem 0.6rem; overflow-y: auto; }
+.nav-section { margin-bottom: 1.5rem; }
+.nav-section-label { color: rgba(255,255,255,0.35); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; padding: 0 0.6rem; margin-bottom: 0.4rem; }
+.nav-item {
+  display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0.8rem; border-radius: 8px;
+  color: rgba(255,255,255,0.65); cursor: pointer; font-size: 0.88rem; font-weight: 500;
+  transition: all 0.15s; margin-bottom: 2px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+.nav-item.active { background: var(--blue); color: white; }
+.nav-item .icon { width: 18px; text-align: center; font-size: 1rem; }
+.nav-badge { margin-left: auto; background: rgba(255,255,255,0.15); color: white; padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.72rem; }
+.nav-badge.blue { background: var(--blue); }
+
+.sidebar-user { padding: 1rem; border-top: 1px solid rgba(255,255,255,0.08); display: flex; align-items: center; gap: 0.8rem; }
+.user-avatar { width: 34px; height: 34px; background: var(--blue); border-radius: 50%; display: flex; align-items: center; justify-content: center; color: white; font-weight: 700; font-size: 0.85rem; }
+.user-info { flex: 1; }
+.user-name { color: white; font-size: 0.82rem; font-weight: 600; }
+.user-role { color: rgba(255,255,255,0.4); font-size: 0.7rem; }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* TOPBAR */
+.topbar {
+  background: var(--white); border-bottom: 1px solid var(--border);
+  padding: 0 2rem; height: 60px; display: flex; align-items: center; gap: 1rem; flex-shrink: 0;
+}
+.topbar-title { font-weight: 700; font-size: 1.1rem; color: var(--navy); flex: 1; }
+.search-bar {
+  display: flex; align-items: center; gap: 0.5rem; background: var(--bg); border: 1.5px solid var(--border);
+  border-radius: 8px; padding: 0.4rem 0.8rem; width: 280px; transition: border-color 0.2s;
+}
+.search-bar:focus-within { border-color: var(--blue); }
+.search-bar input { background: none; border: none; outline: none; font-size: 0.85rem; color: var(--text); width: 100%; }
+.topbar-actions { display: flex; gap: 0.5rem; }
+.icon-btn { width: 36px; height: 36px; border: 1.5px solid var(--border); border-radius: 8px; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.15s; }
+.icon-btn:hover { background: var(--bg); border-color: var(--blue); }
+.notif-dot { position: relative; }
+.notif-dot::after { content: ''; position: absolute; top: -2px; right: -2px; width: 8px; height: 8px; background: var(--red); border-radius: 50%; border: 2px solid white; }
+
+/* CONTENT */
+.content { flex: 1; overflow-y: auto; padding: 2rem; }
+
+/* PAGE SECTIONS */
+.page { display: none; }
+.page.active { display: block; }
+
+/* DASHBOARD */
+.kpi-grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 1.2rem; margin-bottom: 2rem; }
+.kpi-card {
+  background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 1.4rem;
+  display: flex; flex-direction: column; gap: 0.5rem; transition: box-shadow 0.2s;
+}
+.kpi-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.07); }
+.kpi-header { display: flex; align-items: center; justify-content: space-between; }
+.kpi-icon { width: 40px; height: 40px; border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.kpi-icon.blue { background: var(--blue-light); }
+.kpi-icon.teal { background: var(--teal-light); }
+.kpi-icon.amber { background: var(--amber-light); }
+.kpi-icon.red { background: var(--red-light); }
+.kpi-trend { font-size: 0.72rem; padding: 0.15rem 0.5rem; border-radius: 20px; font-weight: 600; }
+.kpi-trend.up { background: var(--green-light); color: var(--green); }
+.kpi-trend.down { background: var(--red-light); color: var(--red); }
+.kpi-value { font-size: 1.9rem; font-weight: 700; color: var(--navy); }
+.kpi-label { font-size: 0.8rem; color: var(--muted); }
+
+.dashboard-grid { display: grid; grid-template-columns: 2fr 1fr; gap: 1.5rem; }
+.card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; }
+.card-title { font-weight: 700; font-size: 1rem; color: var(--navy); margin-bottom: 1.2rem; display: flex; align-items: center; justify-content: space-between; }
+
+/* TABLE */
+.data-table { width: 100%; border-collapse: collapse; }
+.data-table th { padding: 0.6rem 1rem; text-align: left; font-size: 0.72rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.8px; color: var(--muted); background: var(--bg); }
+.data-table td { padding: 0.85rem 1rem; border-bottom: 1px solid var(--border); font-size: 0.88rem; }
+.data-table tr:last-child td { border-bottom: none; }
+.data-table tr:hover td { background: var(--blue-light); }
+.data-table tbody tr { cursor: pointer; transition: background 0.1s; }
+
+/* BADGE STATUS */
+.status { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+.status-active { background: var(--green-light); color: var(--green); }
+.status-hospitalized { background: var(--amber-light); color: var(--amber); }
+.status-inactive { background: var(--bg); color: var(--muted); }
+
+/* AVATAR */
+.avatar { width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-weight: 700; font-size: 0.78rem; }
+.avatar-blue { background: var(--blue-mid); color: var(--blue); }
+.avatar-teal { background: var(--teal-light); color: var(--teal); }
+.avatar-amber { background: var(--amber-light); color: var(--amber); }
+
+.patient-cell { display: flex; align-items: center; gap: 0.8rem; }
+.patient-info { display: flex; flex-direction: column; }
+.patient-name { font-weight: 600; font-size: 0.88rem; }
+.patient-cin { color: var(--muted); font-size: 0.75rem; font-family: 'DM Mono', monospace; }
+
+/* BUTTONS */
+.btn { padding: 0.55rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.15s; }
+.btn-primary { background: var(--blue); color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-secondary { background: var(--white); color: var(--text); border: 1.5px solid var(--border); }
+.btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+.btn-danger { background: var(--red-light); color: var(--red); }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+
+/* PAGE HEADER */
+.page-header { display: flex; align-items: center; justify-content: space-between; margin-bottom: 1.8rem; }
+.page-header-left h1 { font-size: 1.5rem; font-weight: 700; color: var(--navy); }
+.page-header-left p { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+
+/* FILTERS */
+.filters { display: flex; gap: 0.8rem; margin-bottom: 1.5rem; align-items: center; flex-wrap: wrap; }
+.filter-input {
+  padding: 0.5rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 0.85rem; background: var(--white); outline: none; transition: border-color 0.2s;
+}
+.filter-input:focus { border-color: var(--blue); }
+.filter-label { font-size: 0.78rem; font-weight: 600; color: var(--muted); }
+
+/* MODAL OVERLAY */
+.modal-overlay {
+  position: fixed; inset: 0; background: rgba(15,32,64,0.5); z-index: 200;
+  display: flex; align-items: center; justify-content: center;
+  opacity: 0; pointer-events: none; transition: opacity 0.2s;
+}
+.modal-overlay.open { opacity: 1; pointer-events: all; }
+.modal {
+  background: var(--white); border-radius: 16px; width: 600px; max-width: 95vw; max-height: 90vh;
+  overflow-y: auto; transform: translateY(20px); transition: transform 0.2s; box-shadow: 0 20px 60px rgba(0,0,0,0.2);
+}
+.modal-overlay.open .modal { transform: translateY(0); }
+.modal-header { padding: 1.5rem 1.8rem; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; }
+.modal-header h2 { font-size: 1.1rem; font-weight: 700; color: var(--navy); }
+.modal-close { background: none; border: none; cursor: pointer; font-size: 1.3rem; color: var(--muted); }
+.modal-body { padding: 1.5rem 1.8rem; }
+.modal-footer { padding: 1.2rem 1.8rem; border-top: 1px solid var(--border); display: flex; justify-content: flex-end; gap: 0.8rem; }
+
+/* FORM */
+.form-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 1.2rem; }
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; }
+.form-group.full { grid-column: 1 / -1; }
+label { font-size: 0.8rem; font-weight: 600; color: var(--muted); }
+.form-control {
+  padding: 0.6rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 0.88rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: var(--white);
+}
+.form-control:focus { border-color: var(--blue); }
+.form-control.error { border-color: var(--red); }
+.error-msg { color: var(--red); font-size: 0.75rem; }
+
+/* DOSSIER PATIENT */
+.dossier-tabs { display: flex; border-bottom: 2px solid var(--border); margin-bottom: 1.5rem; gap: 0; }
+.dossier-tab { padding: 0.7rem 1.2rem; font-size: 0.85rem; font-weight: 600; cursor: pointer; color: var(--muted); border-bottom: 2px solid transparent; margin-bottom: -2px; transition: all 0.15s; }
+.dossier-tab:hover { color: var(--blue); }
+.dossier-tab.active { color: var(--blue); border-bottom-color: var(--blue); }
+
+.dossier-panel { display: none; }
+.dossier-panel.active { display: block; }
+
+/* CONSULTATION CARD */
+.consult-card {
+  background: var(--bg); border: 1px solid var(--border); border-radius: 12px;
+  padding: 1.2rem; margin-bottom: 1rem; transition: border-color 0.2s;
+}
+.consult-card:hover { border-color: var(--blue); }
+.consult-header { display: flex; justify-content: space-between; margin-bottom: 0.8rem; }
+.consult-date { font-weight: 700; font-size: 0.88rem; color: var(--navy); }
+.consult-medecin { color: var(--muted); font-size: 0.8rem; }
+.consult-motif { font-size: 0.85rem; margin-bottom: 0.5rem; }
+.consult-diag { background: var(--blue-light); border-radius: 8px; padding: 0.6rem 0.8rem; font-size: 0.82rem; color: var(--navy-light); }
+
+/* VITALS */
+.vitals-row { display: flex; gap: 1rem; flex-wrap: wrap; margin-bottom: 0.6rem; }
+.vital { background: var(--white); border: 1px solid var(--border); border-radius: 8px; padding: 0.5rem 0.8rem; text-align: center; min-width: 80px; }
+.vital-val { font-size: 1rem; font-weight: 700; color: var(--navy); font-family: 'DM Mono', monospace; }
+.vital-lbl { font-size: 0.65rem; color: var(--muted); margin-top: 0.1rem; }
+
+/* ANTECEDENT TAG */
+.antecedent-chip {
+  display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.35rem 0.8rem;
+  border-radius: 20px; font-size: 0.78rem; font-weight: 600; margin-right: 0.5rem; margin-bottom: 0.5rem;
+}
+.chip-medical { background: #fee2e2; color: #991b1b; }
+.chip-familial { background: #ede9fe; color: #4c1d95; }
+.chip-allergique { background: #fef3c7; color: #78350f; }
+.chip-chirurgical { background: #dcfce7; color: #14532d; }
+
+/* ORDONNANCE */
+.ordo-card { background: var(--white); border: 1px solid var(--border); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; }
+.ordo-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem; }
+.medicament-row { display: flex; align-items: center; gap: 1rem; padding: 0.6rem; border-radius: 8px; margin-bottom: 0.3rem; background: var(--bg); }
+.med-name { font-weight: 600; font-size: 0.88rem; }
+.med-detail { color: var(--muted); font-size: 0.78rem; }
+
+/* STATS MINI */
+.activity-item { display: flex; align-items: center; gap: 0.8rem; padding: 0.7rem 0; border-bottom: 1px solid var(--border); }
+.activity-item:last-child { border-bottom: none; }
+.activity-dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+.activity-text { font-size: 0.83rem; flex: 1; }
+.activity-time { font-size: 0.73rem; color: var(--muted); }
+
+/* EMPTY STATE */
+.empty-state { text-align: center; padding: 3rem; color: var(--muted); }
+.empty-state .icon { font-size: 3rem; margin-bottom: 1rem; }
+.empty-state p { font-size: 0.9rem; }
+
+/* TOAST */
+.toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 500; display: flex; flex-direction: column; gap: 0.5rem; }
+.toast { background: var(--navy); color: white; padding: 0.8rem 1.2rem; border-radius: 10px; font-size: 0.85rem; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 0.6rem; }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* PAGINATION */
+.pagination { display: flex; justify-content: center; align-items: center; gap: 0.5rem; margin-top: 1.5rem; }
+.page-btn { width: 36px; height: 36px; border-radius: 8px; border: 1.5px solid var(--border); background: var(--white); cursor: pointer; font-size: 0.85rem; font-weight: 600; transition: all 0.15s; }
+.page-btn:hover { border-color: var(--blue); color: var(--blue); }
+.page-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🏥</div>
+    <div>
+      <div class="logo-text">GestiPatient</div>
+      <div class="logo-sub">Système Hospitalier</div>
+    </div>
+  </div>
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Principal</div>
+      <div class="nav-item active" onclick="showPage('dashboard', this)">
+        <span class="icon">📊</span> Tableau de bord
+      </div>
+      <div class="nav-item" onclick="showPage('patients', this)">
+        <span class="icon">👥</span> Patients
+        <span class="nav-badge blue">247</span>
+      </div>
+      <div class="nav-item" onclick="showPage('dossiers', this)">
+        <span class="icon">📁</span> Dossiers médicaux
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Médical</div>
+      <div class="nav-item" onclick="showPage('consultations', this)">
+        <span class="icon">🩺</span> Consultations
+        <span class="nav-badge">12</span>
+      </div>
+      <div class="nav-item" onclick="showPage('hospitalisations', this)">
+        <span class="icon">🛏️</span> Hospitalisations
+        <span class="nav-badge">8</span>
+      </div>
+      <div class="nav-item" onclick="showPage('ordonnances', this)">
+        <span class="icon">💊</span> Ordonnances
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Analyses</div>
+      <div class="nav-item" onclick="showPage('laboratoire', this)">
+        <span class="icon">🔬</span> Laboratoire
+      </div>
+      <div class="nav-item" onclick="showPage('radiologie', this)">
+        <span class="icon">📷</span> Radiologie
+      </div>
+    </div>
+  </nav>
+  <div class="sidebar-user">
+    <div class="user-avatar">DM</div>
+    <div class="user-info">
+      <div class="user-name">Dr. Mouad</div>
+      <div class="user-role">Médecin Chef</div>
+    </div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">Tableau de bord</div>
+    <div class="search-bar">
+      <span>🔍</span>
+      <input type="text" placeholder="Rechercher patient, CIN..." id="global-search" oninput="handleSearch(this.value)">
+    </div>
+    <div class="topbar-actions">
+      <button class="icon-btn notif-dot" title="Notifications">🔔</button>
+      <button class="icon-btn" title="Paramètres">⚙️</button>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- DASHBOARD -->
+    <div class="page active" id="page-dashboard">
+      <div class="kpi-grid">
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon blue">👥</div>
+            <span class="kpi-trend up">↑ +12%</span>
+          </div>
+          <div class="kpi-value">247</div>
+          <div class="kpi-label">Total Patients</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon teal">🩺</div>
+            <span class="kpi-trend up">↑ +5%</span>
+          </div>
+          <div class="kpi-value">38</div>
+          <div class="kpi-label">Consultations ce mois</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon amber">🛏️</div>
+            <span class="kpi-trend down">↓ -2</span>
+          </div>
+          <div class="kpi-value">8</div>
+          <div class="kpi-label">Hospitalisations actives</div>
+        </div>
+        <div class="kpi-card">
+          <div class="kpi-header">
+            <div class="kpi-icon blue">📋</div>
+            <span class="kpi-trend up">↑ +8</span>
+          </div>
+          <div class="kpi-value">24</div>
+          <div class="kpi-label">Nouveaux ce mois</div>
+        </div>
+      </div>
+
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-title">
+            <span>Derniers patients enregistrés</span>
+            <button class="btn btn-secondary btn-sm" onclick="showPage('patients', document.querySelector('.nav-item:nth-child(2)'))">Voir tout</button>
+          </div>
+          <table class="data-table">
+            <thead>
+              <tr><th>Patient</th><th>Âge / Sexe</th><th>Groupe sanguin</th><th>Statut</th></tr>
+            </thead>
+            <tbody id="dashboard-patients"></tbody>
+          </table>
+        </div>
+        <div class="card">
+          <div class="card-title">Activité récente</div>
+          <div id="activity-feed"></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PATIENTS LIST -->
+    <div class="page" id="page-patients">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>👥 Gestion des Patients</h1>
+          <p>247 patients enregistrés · Recherche et gestion complète</p>
+        </div>
+        <button class="btn btn-primary" onclick="openModal('modal-new-patient')">
+          ＋ Nouveau patient
+        </button>
+      </div>
+
+      <div class="filters">
+        <input type="text" class="filter-input" placeholder="🔍 Nom, prénom, CIN..." id="patient-search" oninput="filterPatients(this.value)" style="width:260px">
+        <select class="filter-input" id="filter-sexe" onchange="filterPatients()">
+          <option value="">Tous les sexes</option>
+          <option value="MASCULIN">Masculin</option>
+          <option value="FEMININ">Féminin</option>
+        </select>
+        <select class="filter-input" id="filter-groupe" onchange="filterPatients()">
+          <option value="">Tous groupes sanguins</option>
+          <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+          <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+        </select>
+        <select class="filter-input" id="filter-statut" onchange="filterPatients()">
+          <option value="">Tous statuts</option>
+          <option value="Actif">Actif</option>
+          <option value="Hospitalisé">Hospitalisé</option>
+        </select>
+        <span id="filter-count" style="color:var(--muted);font-size:0.82rem;margin-left:auto;"></span>
+      </div>
+
+      <div class="card" style="padding:0;overflow:hidden;">
+        <table class="data-table">
+          <thead>
+            <tr>
+              <th>Patient</th><th>Date naissance</th><th>Téléphone</th>
+              <th>Groupe sg.</th><th>Médecin réf.</th><th>Statut</th><th>Actions</th>
+            </tr>
+          </thead>
+          <tbody id="patients-table"></tbody>
+        </table>
+        <div class="pagination" id="patients-pagination"></div>
+      </div>
+    </div>
+
+    <!-- DOSSIER MEDICAL (patient detail) -->
+    <div class="page" id="page-dossiers">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1 id="dossier-patient-name">📁 Dossier Médical</h1>
+          <p id="dossier-patient-info">Sélectionner un patient pour voir son dossier</p>
+        </div>
+        <div style="display:flex;gap:0.8rem;">
+          <button class="btn btn-secondary" onclick="showPage('patients', null)">← Retour</button>
+          <button class="btn btn-primary" onclick="openModal('modal-consultation')">+ Consultation</button>
+        </div>
+      </div>
+
+      <div class="dossier-tabs">
+        <div class="dossier-tab active" onclick="showDossierTab('consultations', this)">🩺 Consultations</div>
+        <div class="dossier-tab" onclick="showDossierTab('antecedents', this)">⚕️ Antécédents</div>
+        <div class="dossier-tab" onclick="showDossierTab('ordonnances', this)">💊 Ordonnances</div>
+        <div class="dossier-tab" onclick="showDossierTab('analyses', this)">🔬 Analyses</div>
+        <div class="dossier-tab" onclick="showDossierTab('hospi', this)">🛏️ Hospitalisations</div>
+        <div class="dossier-tab" onclick="showDossierTab('certificats', this)">📜 Certificats</div>
+      </div>
+
+      <div class="dossier-panel active" id="dossier-consultations"></div>
+      <div class="dossier-panel" id="dossier-antecedents"></div>
+      <div class="dossier-panel" id="dossier-ordonnances"></div>
+      <div class="dossier-panel" id="dossier-analyses"></div>
+      <div class="dossier-panel" id="dossier-hospi"></div>
+      <div class="dossier-panel" id="dossier-certificats"></div>
+    </div>
+
+    <!-- OTHER PAGES (placeholder) -->
+    <div class="page" id="page-consultations">
+      <div class="page-header">
+        <div class="page-header-left"><h1>🩺 Consultations</h1><p>Toutes les consultations</p></div>
+        <button class="btn btn-primary" onclick="openModal('modal-consultation')">+ Nouvelle consultation</button>
+      </div>
+      <div class="card"><div id="all-consultations-table"></div></div>
+    </div>
+
+    <div class="page" id="page-hospitalisations">
+      <div class="page-header">
+        <div class="page-header-left"><h1>🛏️ Hospitalisations</h1><p>Patients actuellement hospitalisés</p></div>
+        <button class="btn btn-primary">+ Admission</button>
+      </div>
+      <div id="hospi-cards"></div>
+    </div>
+
+    <div class="page" id="page-ordonnances">
+      <div class="page-header">
+        <div class="page-header-left"><h1>💊 Ordonnances</h1><p>Gestion des prescriptions médicales</p></div>
+      </div>
+      <div id="ordo-list"></div>
+    </div>
+
+    <div class="page" id="page-laboratoire">
+      <div class="page-header">
+        <div class="page-header-left"><h1>🔬 Analyses de Laboratoire</h1><p>Résultats et suivi des analyses</p></div>
+        <button class="btn btn-primary">+ Nouvelle analyse</button>
+      </div>
+      <div class="card"><div id="lab-table"></div></div>
+    </div>
+
+    <div class="page" id="page-radiologie">
+      <div class="page-header">
+        <div class="page-header-left"><h1>📷 Radiologie</h1><p>Examens d'imagerie médicale</p></div>
+      </div>
+      <div class="card"><div id="radio-table"></div></div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- MODALS -->
+<div class="modal-overlay" id="modal-new-patient" onclick="closeOnOverlay(event, 'modal-new-patient')">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Nouveau Patient</h2>
+      <button class="modal-close" onclick="closeModal('modal-new-patient')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group"><label>Nom *</label><input class="form-control" id="f-nom" placeholder="Nom de famille"></div>
+        <div class="form-group"><label>Prénom *</label><input class="form-control" id="f-prenom" placeholder="Prénom"></div>
+        <div class="form-group"><label>CIN *</label><input class="form-control" id="f-cin" placeholder="Ex: AB123456"></div>
+        <div class="form-group"><label>Date de naissance *</label><input type="date" class="form-control" id="f-dob"></div>
+        <div class="form-group">
+          <label>Sexe</label>
+          <select class="form-control" id="f-sexe">
+            <option value="">-- Sélectionner --</option>
+            <option value="MASCULIN">Masculin</option>
+            <option value="FEMININ">Féminin</option>
+          </select>
+        </div>
+        <div class="form-group">
+          <label>Groupe sanguin</label>
+          <select class="form-control" id="f-groupe">
+            <option value="">-- Sélectionner --</option>
+            <option>A+</option><option>A-</option><option>B+</option><option>B-</option>
+            <option>AB+</option><option>AB-</option><option>O+</option><option>O-</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Téléphone</label><input class="form-control" id="f-tel" placeholder="0600000000"></div>
+        <div class="form-group"><label>Email</label><input type="email" class="form-control" id="f-email" placeholder="email@exemple.com"></div>
+        <div class="form-group full"><label>Adresse</label><input class="form-control" id="f-adresse" placeholder="Adresse complète"></div>
+        <div class="form-group"><label>Ville</label><input class="form-control" id="f-ville" placeholder="Ville"></div>
+        <div class="form-group"><label>N° CNSS</label><input class="form-control" id="f-cnss" placeholder="Numéro CNSS"></div>
+        <div class="form-group full"><label>Mutuelle</label><input class="form-control" id="f-mutuelle" placeholder="Nom de la mutuelle (optionnel)"></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-new-patient')">Annuler</button>
+      <button class="btn btn-primary" onclick="submitNewPatient()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="modal-consultation" onclick="closeOnOverlay(event, 'modal-consultation')">
+  <div class="modal">
+    <div class="modal-header">
+      <h2>Nouvelle Consultation</h2>
+      <button class="modal-close" onclick="closeModal('modal-consultation')">✕</button>
+    </div>
+    <div class="modal-body">
+      <div class="form-grid">
+        <div class="form-group full">
+          <label>Patient *</label>
+          <select class="form-control" id="c-patient">
+            <option value="">-- Sélectionner un patient --</option>
+          </select>
+        </div>
+        <div class="form-group"><label>Date *</label><input type="datetime-local" class="form-control" id="c-date"></div>
+        <div class="form-group"><label>Motif *</label><input class="form-control" id="c-motif" placeholder="Motif de la consultation"></div>
+        <div class="form-group"><label>Poids (kg)</label><input type="number" class="form-control" id="c-poids" placeholder="Ex: 70"></div>
+        <div class="form-group"><label>Taille (cm)</label><input type="number" class="form-control" id="c-taille" placeholder="Ex: 175"></div>
+        <div class="form-group"><label>Tension (sys/dia)</label><div style="display:flex;gap:0.4rem;"><input type="number" class="form-control" id="c-sys" placeholder="120"><span style="align-self:center">/</span><input type="number" class="form-control" id="c-dia" placeholder="80"></div></div>
+        <div class="form-group"><label>Température (°C)</label><input type="number" step="0.1" class="form-control" id="c-temp" placeholder="Ex: 37.2"></div>
+        <div class="form-group full"><label>Diagnostic</label><textarea class="form-control" id="c-diag" rows="2" placeholder="Diagnostic médical"></textarea></div>
+        <div class="form-group full"><label>Traitement prescrit</label><textarea class="form-control" id="c-traitement" rows="2" placeholder="Traitement recommandé"></textarea></div>
+        <div class="form-group full"><label>Observations</label><textarea class="form-control" id="c-obs" rows="2" placeholder="Observations supplémentaires"></textarea></div>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="btn btn-secondary" onclick="closeModal('modal-consultation')">Annuler</button>
+      <button class="btn btn-primary" onclick="submitConsultation()">💾 Enregistrer</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST CONTAINER -->
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+// =================== DATA ===================
+const PATIENTS = [
+  { id:1, nom:'Alaoui', prenom:'Mohammed', cin:'AB123456', dob:'1985-03-15', sexe:'MASCULIN', groupe:'A+', tel:'0612345678', email:'m.alaoui@email.com', ville:'Casablanca', statut:'Actif', medecin:'Dr. Benali', mutuelle:'CNSS' },
+  { id:2, nom:'Benali', prenom:'Fatima', cin:'CD789012', dob:'1992-07-22', sexe:'FEMININ', groupe:'O+', tel:'0623456789', email:'f.benali@email.com', ville:'Rabat', statut:'Actif', medecin:'Dr. Mouad', mutuelle:'CNOPS' },
+  { id:3, nom:'Idrissi', prenom:'Youssef', cin:'EF345678', dob:'1978-11-08', sexe:'MASCULIN', groupe:'B-', tel:'0634567890', email:'y.idrissi@email.com', ville:'Fès', statut:'Hospitalisé', medecin:'Dr. Benali', mutuelle:'' },
+  { id:4, nom:'Chaoui', prenom:'Aicha', cin:'GH901234', dob:'2001-04-30', sexe:'FEMININ', groupe:'AB+', tel:'0645678901', email:'a.chaoui@email.com', ville:'Marrakech', statut:'Actif', medecin:'Dr. Mouad', mutuelle:'CNSS' },
+  { id:5, nom:'Mansouri', prenom:'Karim', cin:'IJ567890', dob:'1965-09-12', sexe:'MASCULIN', groupe:'O-', tel:'0656789012', email:'k.mansouri@email.com', ville:'Casablanca', statut:'Actif', medecin:'Dr. Benali', mutuelle:'' },
+  { id:6, nom:'Tazi', prenom:'Sara', cin:'KL234567', dob:'1990-01-18', sexe:'FEMININ', groupe:'A-', tel:'0667890123', email:'s.tazi@email.com', ville:'Rabat', statut:'Actif', medecin:'Dr. Mouad', mutuelle:'CNOPS' },
+  { id:7, nom:'Bouhali', prenom:'Omar', cin:'MN890123', dob:'1973-06-25', sexe:'MASCULIN', groupe:'B+', tel:'0678901234', email:'o.bouhali@email.com', ville:'Oujda', statut:'Hospitalisé', medecin:'Dr. Benali', mutuelle:'CNSS' },
+  { id:8, nom:'Zaki', prenom:'Nadia', cin:'OP456789', dob:'1988-12-03', sexe:'FEMININ', groupe:'O+', tel:'0689012345', email:'n.zaki@email.com', ville:'Tanger', statut:'Actif', medecin:'Dr. Mouad', mutuelle:'' },
+];
+
+const CONSULTATIONS = [
+  { id:1, patientId:1, patientNom:'Alaoui Mohammed', date:'2024-02-15 10:30', motif:'Douleur thoracique', diagnostic:'Anxiety, pas de pathologie cardiaque', traitement:'Anxiolytiques', poids:78, taille:175, tensionSys:125, tensionDia:82, temp:37.0, medecin:'Dr. Mouad' },
+  { id:2, patientId:1, patientNom:'Alaoui Mohammed', date:'2024-01-20 14:00', motif:'Suivi tension artérielle', diagnostic:'HTA contrôlée', traitement:'Continuer traitement antihypertenseur', poids:79, taille:175, tensionSys:135, tensionDia:88, temp:36.8, medecin:'Dr. Benali' },
+  { id:3, patientId:2, patientNom:'Benali Fatima', date:'2024-02-10 09:15', motif:'Céphalées récurrentes', diagnostic:'Migraine sans aura', traitement:'Sumatriptan 50mg', poids:62, taille:163, tensionSys:110, tensionDia:70, temp:37.1, medecin:'Dr. Mouad' },
+  { id:4, patientId:3, patientNom:'Idrissi Youssef', date:'2024-02-18 16:00', motif:'Appendicite suspecte', diagnostic:'Appendicite aiguë', traitement:'Chirurgie urgente', poids:82, taille:178, tensionSys:118, tensionDia:75, temp:38.5, medecin:'Dr. Benali' },
+];
+
+const ANTECEDENTS = [
+  { patientId:1, type:'MEDICAL', desc:'Hypertension artérielle depuis 2015', severite:'MODERE', actif:true },
+  { patientId:1, type:'ALLERGIQUE', desc:'Allergie à la pénicilline', severite:'SEVERE', actif:true },
+  { patientId:1, type:'FAMILIAL', desc:'Diabète type 2 (père)', severite:'FAIBLE', actif:true },
+  { patientId:2, type:'CHIRURGICAL', desc:'Appendicectomie 2018', severite:'FAIBLE', actif:false },
+  { patientId:3, type:'MEDICAL', desc:'Cholécystite', severite:'MODERE', actif:true },
+];
+
+const ORDONNANCES = [
+  { id:1, patientId:1, date:'2024-02-15', type:'SIMPLE', medecin:'Dr. Mouad', lignes:[
+    { med:'Amlodipine', dosage:'5mg', posologie:'1 comprimé/jour matin', duree:30 },
+    { med:'Anxiovit', dosage:'0.5mg', posologie:'1 comprimé soir', duree:15 },
+  ]},
+  { id:2, patientId:2, date:'2024-02-10', type:'SECURISEE', medecin:'Dr. Mouad', lignes:[
+    { med:'Sumatriptan', dosage:'50mg', posologie:'1 comprimé à la crise', duree:0 },
+    { med:'Paracétamol', dosage:'1g', posologie:'3x/jour si douleur', duree:5 },
+  ]},
+];
+
+const HOSPITALISATIONS = [
+  { id:1, patientId:3, patient:'Idrissi Youssef', service:'Chirurgie générale', chambre:'101A', dateEntree:'2024-02-18', dateSortie:null, motif:'Appendicite aiguë opérée', medecin:'Dr. Benali', actif:true },
+  { id:2, patientId:7, patient:'Bouhali Omar', service:'Cardiologie', chambre:'205B', dateEntree:'2024-02-14', dateSortie:null, motif:'Infarctus du myocarde', medecin:'Dr. Mouad', actif:true },
+];
+
+const ANALYSES = [
+  { id:1, patientId:1, type:'NFS', date:'2024-02-01', statut:'TERMINE', severite:'FAIBLE', labo:'Labo Central', resultats:'GB: 7.2 G/L, GR: 5.1 T/L, Hb: 14.2 g/dL' },
+  { id:2, patientId:2, type:'TSH', date:'2024-01-28', statut:'TERMINE', severite:'MODERE', labo:'Labo Pharma', resultats:'TSH: 6.8 mUI/L (élevé)' },
+];
+
+let filteredPatients = [...PATIENTS];
+let currentPage = 0;
+const PAGE_SIZE = 5;
+let activePatientId = null;
+
+// =================== NAVIGATION ===================
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+  const titles = {
+    dashboard:'Tableau de bord', patients:'Gestion des Patients', dossiers:'Dossier Médical',
+    consultations:'Consultations', hospitalisations:'Hospitalisations', ordonnances:'Ordonnances',
+    laboratoire:'Analyses de Laboratoire', radiologie:'Radiologie'
+  };
+  document.getElementById('topbar-title').textContent = titles[id] || id;
+
+  if (id === 'dashboard') renderDashboard();
+  if (id === 'patients') renderPatients();
+  if (id === 'consultations') renderAllConsultations();
+  if (id === 'hospitalisations') renderHospitalisations();
+  if (id === 'ordonnances') renderOrdonnances();
+  if (id === 'laboratoire') renderLaboratoire();
+  if (id === 'dossiers' && activePatientId) renderDossier(activePatientId);
+}
+
+function showDossierTab(tab, el) {
+  document.querySelectorAll('.dossier-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.dossier-panel').forEach(p => p.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('dossier-' + tab).classList.add('active');
+}
+
+// =================== DASHBOARD ===================
+function renderDashboard() {
+  // Last patients
+  const tbody = document.getElementById('dashboard-patients');
+  tbody.innerHTML = PATIENTS.slice(0,5).map(p => `
+    <tr onclick="openDossier(${p.id})">
+      <td><div class="patient-cell"><div class="avatar avatar-blue">${p.nom[0]}${p.prenom[0]}</div><div class="patient-info"><span class="patient-name">${p.prenom} ${p.nom}</span><span class="patient-cin">${p.cin}</span></div></div></td>
+      <td>${calcAge(p.dob)} ans · ${p.sexe === 'MASCULIN' ? '♂' : '♀'}</td>
+      <td><span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--blue)">${p.groupe}</span></td>
+      <td><span class="status ${p.statut === 'Hospitalisé' ? 'status-hospitalized' : 'status-active'}">${p.statut}</span></td>
+    </tr>
+  `).join('');
+
+  // Activity feed
+  const activities = [
+    { icon:'👤', text:'Nouveau patient Benali Fatima', time:'Il y a 5 min', color:'#2563eb' },
+    { icon:'🩺', text:'Consultation Alaoui Mohammed', time:'Il y a 22 min', color:'#0d9488' },
+    { icon:'💊', text:'Ordonnance prescrite à Tazi Sara', time:'Il y a 1h', color:'#d97706' },
+    { icon:'🔬', text:'Résultat analyse Mansouri Karim', time:'Il y a 2h', color:'#7c3aed' },
+    { icon:'🛏️', text:'Admission Idrissi Youssef — Chirurgie', time:'Il y a 3h', color:'#dc2626' },
+  ];
+  document.getElementById('activity-feed').innerHTML = activities.map(a => `
+    <div class="activity-item">
+      <div class="activity-dot" style="background:${a.color}"></div>
+      <span class="activity-text">${a.icon} ${a.text}</span>
+      <span class="activity-time">${a.time}</span>
+    </div>
+  `).join('');
+}
+
+// =================== PATIENTS ===================
+function renderPatients(page = 0) {
+  currentPage = page;
+  const start = page * PAGE_SIZE;
+  const paginated = filteredPatients.slice(start, start + PAGE_SIZE);
+  document.getElementById('filter-count').textContent = `${filteredPatients.length} patient(s) trouvé(s)`;
+
+  document.getElementById('patients-table').innerHTML = paginated.length ? paginated.map(p => `
+    <tr onclick="openDossier(${p.id})">
+      <td><div class="patient-cell"><div class="avatar ${p.sexe === 'MASCULIN' ? 'avatar-blue' : 'avatar-teal'}">${p.nom[0]}${p.prenom[0]}</div><div class="patient-info"><span class="patient-name">${p.prenom} ${p.nom}</span><span class="patient-cin">${p.cin}</span></div></div></td>
+      <td>${formatDate(p.dob)} <span style="color:var(--muted)">(${calcAge(p.dob)} ans)</span></td>
+      <td style="font-family:'DM Mono',monospace">${p.tel}</td>
+      <td><span style="font-family:'DM Mono',monospace;font-weight:700;color:var(--blue);background:var(--blue-light);padding:0.2rem 0.6rem;border-radius:6px">${p.groupe}</span></td>
+      <td style="color:var(--muted);font-size:0.82rem">${p.medecin}</td>
+      <td><span class="status ${p.statut === 'Hospitalisé' ? 'status-hospitalized' : 'status-active'}">${p.statut}</span></td>
+      <td>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();openDossier(${p.id})">📁 Dossier</button>
+        <button class="btn btn-secondary btn-sm" onclick="event.stopPropagation();showToast('Modification non implémentée en démo','info')">✏️</button>
+      </td>
+    </tr>
+  `).join('') : '<tr><td colspan="7"><div class="empty-state"><div class="icon">🔍</div><p>Aucun patient trouvé</p></div></td></tr>';
+
+  // Pagination
+  const totalPages = Math.ceil(filteredPatients.length / PAGE_SIZE);
+  const pag = document.getElementById('patients-pagination');
+  pag.innerHTML = '';
+  for (let i = 0; i < totalPages; i++) {
+    const btn = document.createElement('button');
+    btn.className = 'page-btn' + (i === page ? ' active' : '');
+    btn.textContent = i + 1;
+    btn.onclick = () => renderPatients(i);
+    pag.appendChild(btn);
+  }
+  if (totalPages > 1) pag.style.padding = '1rem';
+}
+
+function filterPatients() {
+  const search = document.getElementById('patient-search').value.toLowerCase();
+  const sexe = document.getElementById('filter-sexe').value;
+  const groupe = document.getElementById('filter-groupe').value;
+  const statut = document.getElementById('filter-statut').value;
+  filteredPatients = PATIENTS.filter(p =>
+    (!search || p.nom.toLowerCase().includes(search) || p.prenom.toLowerCase().includes(search) || p.cin.toLowerCase().includes(search)) &&
+    (!sexe || p.sexe === sexe) &&
+    (!groupe || p.groupe === groupe) &&
+    (!statut || p.statut === statut)
+  );
+  renderPatients(0);
+}
+
+function handleSearch(val) {
+  if (document.getElementById('page-patients').classList.contains('active')) {
+    document.getElementById('patient-search').value = val;
+    filterPatients();
+  }
+}
+
+// =================== DOSSIER ===================
+function openDossier(patientId) {
+  activePatientId = patientId;
+  const p = PATIENTS.find(p => p.id === patientId);
+  document.getElementById('dossier-patient-name').textContent = `📁 Dossier — ${p.prenom} ${p.nom}`;
+  document.getElementById('dossier-patient-info').textContent = `CIN: ${p.cin} · ${calcAge(p.dob)} ans · ${p.sexe} · Groupe ${p.groupe} · ${p.ville}`;
+  showPage('dossiers', null);
+  renderDossier(patientId);
+}
+
+function renderDossier(patientId) {
+  renderDossierConsultations(patientId);
+  renderDossierAntecedents(patientId);
+  renderDossierOrdonnances(patientId);
+  renderDossierAnalyses(patientId);
+  renderDossierHospi(patientId);
+}
+
+function renderDossierConsultations(pid) {
+  const consults = CONSULTATIONS.filter(c => c.patientId === pid);
+  document.getElementById('dossier-consultations').innerHTML = consults.length ? consults.map(c => `
+    <div class="consult-card">
+      <div class="consult-header">
+        <span class="consult-date">🗓️ ${c.date}</span>
+        <span class="consult-medecin">👨‍⚕️ ${c.medecin}</span>
+      </div>
+      <div class="vitals-row">
+        ${c.poids ? `<div class="vital"><div class="vital-val">${c.poids}</div><div class="vital-lbl">kg</div></div>` : ''}
+        ${c.taille ? `<div class="vital"><div class="vital-val">${c.taille}</div><div class="vital-lbl">cm</div></div>` : ''}
+        ${c.tensionSys ? `<div class="vital"><div class="vital-val">${c.tensionSys}/${c.tensionDia}</div><div class="vital-lbl">mmHg</div></div>` : ''}
+        ${c.temp ? `<div class="vital"><div class="vital-val">${c.temp}°</div><div class="vital-lbl">Temp.</div></div>` : ''}
+      </div>
+      <div class="consult-motif">📌 <strong>Motif :</strong> ${c.motif}</div>
+      ${c.diagnostic ? `<div class="consult-diag">🔍 <strong>Diagnostic :</strong> ${c.diagnostic}</div>` : ''}
+      ${c.traitement ? `<div style="margin-top:0.5rem;font-size:0.82rem;color:var(--teal)">💊 <strong>Traitement :</strong> ${c.traitement}</div>` : ''}
+    </div>
+  `).join('') : '<div class="empty-state"><div class="icon">🩺</div><p>Aucune consultation enregistrée</p></div>';
+}
+
+function renderDossierAntecedents(pid) {
+  const antec = ANTECEDENTS.filter(a => a.patientId === pid);
+  const chipClass = { MEDICAL:'chip-medical', FAMILIAL:'chip-familial', ALLERGIQUE:'chip-allergique', CHIRURGICAL:'chip-chirurgical' };
+  document.getElementById('dossier-antecedents').innerHTML = antec.length ? `
+    <div class="card">
+      <div style="margin-bottom:1rem;">${antec.map(a => `
+        <span class="antecedent-chip ${chipClass[a.type] || 'chip-medical'}">
+          ${a.type} · ${a.desc} ${!a.actif ? '(résolu)' : ''}
+        </span>
+      `).join('')}</div>
+    </div>
+  ` : '<div class="empty-state"><div class="icon">⚕️</div><p>Aucun antécédent renseigné</p></div>';
+}
+
+function renderDossierOrdonnances(pid) {
+  const ordos = ORDONNANCES.filter(o => o.patientId === pid);
+  document.getElementById('dossier-ordonnances').innerHTML = ordos.length ? ordos.map(o => `
+    <div class="ordo-card">
+      <div class="ordo-header">
+        <div><strong>${o.date}</strong> <span class="status status-active">${o.type}</span></div>
+        <span style="color:var(--muted);font-size:0.82rem">👨‍⚕️ ${o.medecin}</span>
+      </div>
+      ${o.lignes.map(l => `
+        <div class="medicament-row">
+          <div style="flex:1"><div class="med-name">💊 ${l.med} — ${l.dosage}</div><div class="med-detail">${l.posologie}${l.duree ? ' · ' + l.duree + ' jours' : ''}</div></div>
+        </div>
+      `).join('')}
+    </div>
+  `).join('') : '<div class="empty-state"><div class="icon">💊</div><p>Aucune ordonnance</p></div>';
+}
+
+function renderDossierAnalyses(pid) {
+  const analyses = ANALYSES.filter(a => a.patientId === pid);
+  document.getElementById('dossier-analyses').innerHTML = analyses.length ? analyses.map(a => `
+    <div class="consult-card">
+      <div class="consult-header">
+        <span class="consult-date">🔬 ${a.type} — ${a.date}</span>
+        <span class="status ${a.statut === 'TERMINE' ? 'status-active' : 'status-hospitalized'}">${a.statut}</span>
+      </div>
+      <div style="font-size:0.85rem;color:var(--navy)">${a.resultats}</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:0.3rem">🏥 ${a.labo}</div>
+    </div>
+  `).join('') : '<div class="empty-state"><div class="icon">🔬</div><p>Aucune analyse</p></div>';
+}
+
+function renderDossierHospi(pid) {
+  const hospi = HOSPITALISATIONS.filter(h => h.patientId === pid);
+  document.getElementById('dossier-hospi').innerHTML = hospi.length ? hospi.map(h => `
+    <div class="consult-card">
+      <div class="consult-header">
+        <span class="consult-date">🏥 ${h.service} — Chambre ${h.chambre}</span>
+        <span class="status ${h.actif ? 'status-hospitalized' : 'status-inactive'}">${h.actif ? 'En cours' : 'Sorti'}</span>
+      </div>
+      <div style="font-size:0.85rem">📅 Du ${h.dateEntree}${h.dateSortie ? ' au ' + h.dateSortie : ' (en cours)'}</div>
+      <div style="font-size:0.85rem;margin-top:0.3rem;color:var(--navy)">📋 ${h.motif}</div>
+      <div style="font-size:0.78rem;color:var(--muted);margin-top:0.3rem">👨‍⚕️ ${h.medecin}</div>
+    </div>
+  `).join('') : '<div class="empty-state"><div class="icon">🛏️</div><p>Aucune hospitalisation</p></div>';
+}
+
+// =================== OTHER PAGES ===================
+function renderAllConsultations() {
+  document.getElementById('all-consultations-table').innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>Patient</th><th>Date</th><th>Motif</th><th>Médecin</th><th>Diagnostic</th></tr></thead>
+      <tbody>${CONSULTATIONS.map(c => `
+        <tr onclick="openDossier(${c.patientId})">
+          <td><strong>${c.patientNom}</strong></td>
+          <td style="font-size:0.82rem">${c.date}</td>
+          <td>${c.motif}</td>
+          <td style="color:var(--muted)">${c.medecin}</td>
+          <td style="max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${c.diagnostic}</td>
+        </tr>
+      `).join('')}</tbody>
+    </table>
+  `;
+}
+
+function renderHospitalisations() {
+  document.getElementById('hospi-cards').innerHTML = HOSPITALISATIONS.map(h => `
+    <div class="card" style="margin-bottom:1rem;">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:1rem;">
+        <div>
+          <div style="font-weight:700;font-size:1rem;color:var(--navy)">${h.patient}</div>
+          <div style="color:var(--muted);font-size:0.82rem">${h.service} · Chambre ${h.chambre}</div>
+        </div>
+        <span class="status ${h.actif ? 'status-hospitalized' : 'status-inactive'}">${h.actif ? '🔴 En cours' : '✅ Sorti'}</span>
+      </div>
+      <div style="display:flex;gap:1.5rem;font-size:0.85rem;flex-wrap:wrap;">
+        <div>📅 <strong>Entrée:</strong> ${h.dateEntree}</div>
+        <div>📋 <strong>Motif:</strong> ${h.motif}</div>
+        <div>👨‍⚕️ <strong>Médecin:</strong> ${h.medecin}</div>
+      </div>
+      <div style="margin-top:1rem;display:flex;gap:0.6rem">
+        <button class="btn btn-secondary btn-sm" onclick="openDossier(${h.patientId})">📁 Dossier</button>
+        <button class="btn btn-secondary btn-sm">📝 Compte-rendu</button>
+        ${h.actif ? '<button class="btn btn-secondary btn-sm" style="color:var(--green)">✅ Sortie</button>' : ''}
+      </div>
+    </div>
+  `).join('');
+}
+
+function renderOrdonnances() {
+  document.getElementById('ordo-list').innerHTML = ORDONNANCES.map(o => {
+    const p = PATIENTS.find(pt => pt.id === o.patientId);
+    return `
+      <div class="ordo-card">
+        <div class="ordo-header">
+          <div><strong>${p?.prenom} ${p?.nom}</strong> · ${o.date} <span class="status status-active">${o.type}</span></div>
+          <div style="display:flex;gap:0.5rem">
+            <span style="color:var(--muted);font-size:0.82rem">👨‍⚕️ ${o.medecin}</span>
+            <button class="btn btn-secondary btn-sm" onclick="openDossier(${o.patientId})">Voir dossier</button>
+          </div>
+        </div>
+        ${o.lignes.map(l => `
+          <div class="medicament-row">
+            <div style="flex:1"><div class="med-name">💊 ${l.med} — ${l.dosage}</div><div class="med-detail">${l.posologie}${l.duree ? ' · ' + l.duree + ' j' : ''}</div></div>
+          </div>
+        `).join('')}
+      </div>
+    `;
+  }).join('');
+}
+
+function renderLaboratoire() {
+  document.getElementById('lab-table').innerHTML = `
+    <table class="data-table">
+      <thead><tr><th>Patient</th><th>Type</th><th>Date</th><th>Laboratoire</th><th>Statut</th><th>Sévérité</th></tr></thead>
+      <tbody>${ANALYSES.map(a => {
+        const p = PATIENTS.find(pt => pt.id === a.patientId);
+        return `<tr>
+          <td><strong>${p?.prenom} ${p?.nom}</strong></td>
+          <td>${a.type}</td>
+          <td>${a.date}</td>
+          <td style="color:var(--muted)">${a.labo}</td>
+          <td><span class="status ${a.statut === 'TERMINE' ? 'status-active' : 'status-hospitalized'}">${a.statut}</span></td>
+          <td><span class="status ${a.severite === 'FAIBLE' ? 'status-active' : 'status-hospitalized'}">${a.severite}</span></td>
+        </tr>`;
+      }).join('')}</tbody>
+    </table>
+  `;
+}
+
+// =================== MODALS ===================
+function openModal(id) {
+  document.getElementById(id).classList.add('open');
+  if (id === 'modal-consultation') {
+    const sel = document.getElementById('c-patient');
+    sel.innerHTML = '<option>-- Patient --</option>' + PATIENTS.map(p => `<option value="${p.id}">${p.prenom} ${p.nom}</option>`).join('');
+    const now = new Date().toISOString().slice(0, 16);
+    document.getElementById('c-date').value = now;
+  }
+}
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+function closeOnOverlay(e, id) { if (e.target === e.currentTarget) closeModal(id); }
+
+function submitNewPatient() {
+  const nom = document.getElementById('f-nom').value.trim();
+  const prenom = document.getElementById('f-prenom').value.trim();
+  const cin = document.getElementById('f-cin').value.trim();
+  if (!nom || !prenom || !cin) { showToast('Remplissez les champs obligatoires', 'error'); return; }
+  const newPatient = {
+    id: PATIENTS.length + 1,
+    nom, prenom, cin,
+    dob: document.getElementById('f-dob').value || '2000-01-01',
+    sexe: document.getElementById('f-sexe').value || 'MASCULIN',
+    groupe: document.getElementById('f-groupe').value || 'O+',
+    tel: document.getElementById('f-tel').value,
+    email: document.getElementById('f-email').value,
+    ville: document.getElementById('f-ville').value || 'Non renseigné',
+    statut: 'Actif',
+    medecin: 'Dr. Mouad',
+    mutuelle: document.getElementById('f-mutuelle').value,
+  };
+  PATIENTS.push(newPatient);
+  filteredPatients = [...PATIENTS];
+  closeModal('modal-new-patient');
+  showToast(`✅ Patient ${prenom} ${nom} créé avec succès`, 'success');
+  if (document.getElementById('page-patients').classList.contains('active')) renderPatients(0);
+  ['f-nom','f-prenom','f-cin','f-dob','f-tel','f-email','f-adresse','f-ville','f-cnss','f-mutuelle'].forEach(id => {
+    const el = document.getElementById(id); if (el) el.value = '';
+  });
+}
+
+function submitConsultation() {
+  const patId = parseInt(document.getElementById('c-patient').value);
+  const motif = document.getElementById('c-motif').value.trim();
+  if (!patId || !motif) { showToast('Sélectionnez un patient et renseignez le motif', 'error'); return; }
+  const p = PATIENTS.find(pt => pt.id === patId);
+  const newC = {
+    id: CONSULTATIONS.length + 1, patientId: patId,
+    patientNom: `${p.prenom} ${p.nom}`,
+    date: document.getElementById('c-date').value,
+    motif, diagnostic: document.getElementById('c-diag').value,
+    traitement: document.getElementById('c-traitement').value,
+    poids: parseFloat(document.getElementById('c-poids').value) || null,
+    taille: parseFloat(document.getElementById('c-taille').value) || null,
+    tensionSys: parseInt(document.getElementById('c-sys').value) || null,
+    tensionDia: parseInt(document.getElementById('c-dia').value) || null,
+    temp: parseFloat(document.getElementById('c-temp').value) || null,
+    medecin: 'Dr. Mouad',
+  };
+  CONSULTATIONS.unshift(newC);
+  closeModal('modal-consultation');
+  showToast(`✅ Consultation enregistrée pour ${p.prenom} ${p.nom}`, 'success');
+  if (activePatientId === patId) renderDossierConsultations(patId);
+}
+
+// =================== UTILS ===================
+function calcAge(dob) {
+  const d = new Date(dob), now = new Date();
+  let age = now.getFullYear() - d.getFullYear();
+  if (now.getMonth() < d.getMonth() || (now.getMonth() === d.getMonth() && now.getDate() < d.getDate())) age--;
+  return age;
+}
+function formatDate(str) { return new Date(str).toLocaleDateString('fr-FR'); }
+function showToast(msg, type = 'info') {
+  const tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// =================== INIT ===================
+renderDashboard();
+renderPatients();
+</script>
+</body>
+</html>

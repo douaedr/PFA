@@ -1,0 +1,1184 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MedSys Auth — Test Panel</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,400&family=DM+Mono:wght@400;500&display=swap');
+
+:root {
+  --bg: #f7f9fc;
+  --white: #ffffff;
+  --navy: #0f2040;
+  --navy-light: #1a3a6e;
+  --blue: #2563eb;
+  --blue-light: #eff6ff;
+  --blue-mid: #dbeafe;
+  --teal: #0d9488;
+  --teal-light: #f0fdfa;
+  --amber: #d97706;
+  --amber-light: #fffbeb;
+  --red: #dc2626;
+  --red-light: #fef2f2;
+  --green: #16a34a;
+  --green-light: #f0fdf4;
+  --border: #e2e8f0;
+  --text: #1e293b;
+  --muted: #64748b;
+  --sidebar-w: 260px;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
+
+/* SIDEBAR */
+.sidebar {
+  width: var(--sidebar-w);
+  background: var(--navy);
+  display: flex;
+  flex-direction: column;
+  height: 100vh;
+  flex-shrink: 0;
+}
+.sidebar-logo {
+  padding: 1.5rem 1.2rem;
+  border-bottom: 1px solid rgba(255,255,255,0.08);
+  display: flex;
+  align-items: center;
+  gap: 0.8rem;
+}
+.logo-icon { width: 36px; height: 36px; background: var(--blue); border-radius: 10px; display: flex; align-items: center; justify-content: center; font-size: 1.2rem; }
+.logo-text { color: white; font-weight: 700; font-size: 1.05rem; }
+.logo-sub { color: rgba(255,255,255,0.4); font-size: 0.7rem; }
+
+.sidebar-nav { flex: 1; padding: 1rem 0.6rem; overflow-y: auto; }
+.nav-section { margin-bottom: 1.5rem; }
+.nav-section-label { color: rgba(255,255,255,0.35); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 2px; padding: 0 0.6rem; margin-bottom: 0.4rem; }
+.nav-item {
+  display: flex; align-items: center; gap: 0.8rem; padding: 0.6rem 0.8rem; border-radius: 8px;
+  color: rgba(255,255,255,0.65); cursor: pointer; font-size: 0.88rem; font-weight: 500;
+  transition: all 0.15s; margin-bottom: 2px;
+}
+.nav-item:hover { background: rgba(255,255,255,0.08); color: white; }
+.nav-item.active { background: var(--blue); color: white; }
+.nav-item .icon { width: 18px; text-align: center; font-size: 1rem; }
+.nav-badge { margin-left: auto; background: rgba(255,255,255,0.15); color: white; padding: 0.1rem 0.5rem; border-radius: 10px; font-size: 0.72rem; }
+.nav-badge.green { background: var(--green); }
+.nav-badge.amber { background: var(--amber); }
+
+.token-display {
+  margin: 0 0.6rem 0.8rem;
+  background: rgba(255,255,255,0.05);
+  border: 1px solid rgba(255,255,255,0.1);
+  border-radius: 10px;
+  padding: 0.8rem;
+}
+.token-label { color: rgba(255,255,255,0.4); font-size: 0.65rem; text-transform: uppercase; letter-spacing: 1.5px; margin-bottom: 0.4rem; }
+.token-value {
+  font-family: 'DM Mono', monospace;
+  font-size: 0.67rem;
+  color: #86efac;
+  word-break: break-all;
+  line-height: 1.4;
+  max-height: 60px;
+  overflow: hidden;
+}
+.token-value.empty { color: rgba(255,255,255,0.2); font-style: italic; }
+.token-clear { background: none; border: none; color: rgba(255,255,255,0.3); font-size: 0.7rem; cursor: pointer; margin-top: 0.3rem; }
+.token-clear:hover { color: var(--red); }
+
+.sidebar-footer {
+  padding: 1rem 1.2rem;
+  border-top: 1px solid rgba(255,255,255,0.08);
+  font-size: 0.72rem;
+  color: rgba(255,255,255,0.3);
+}
+.server-indicator {
+  display: flex; align-items: center; gap: 0.5rem; margin-bottom: 0.5rem;
+}
+.server-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--amber); }
+.server-dot.online { background: var(--green); }
+
+/* MAIN */
+.main { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+/* TOPBAR */
+.topbar {
+  background: var(--white); border-bottom: 1px solid var(--border);
+  padding: 0 2rem; height: 60px; display: flex; align-items: center; gap: 1rem; flex-shrink: 0;
+}
+.topbar-title { font-weight: 700; font-size: 1.1rem; color: var(--navy); flex: 1; }
+.topbar-subtitle { font-size: 0.78rem; color: var(--muted); font-weight: 400; margin-left: 0.5rem; }
+.method-badge {
+  padding: 0.25rem 0.7rem; border-radius: 6px; font-family: 'DM Mono', monospace;
+  font-size: 0.75rem; font-weight: 600;
+}
+.method-post { background: #fef3c7; color: #92400e; }
+.method-get { background: #dcfce7; color: #14532d; }
+.method-put { background: #ede9fe; color: #4c1d95; }
+.method-delete { background: #fee2e2; color: #991b1b; }
+
+.endpoint-tag {
+  font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--muted);
+  background: var(--bg); padding: 0.25rem 0.7rem; border-radius: 6px; border: 1px solid var(--border);
+}
+.icon-btn { width: 36px; height: 36px; border: 1.5px solid var(--border); border-radius: 8px; background: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 1rem; transition: all 0.15s; }
+.icon-btn:hover { background: var(--bg); border-color: var(--blue); }
+
+/* CONTENT */
+.content { flex: 1; overflow-y: auto; padding: 2rem; }
+
+/* PAGE */
+.page { display: none; }
+.page.active { display: block; }
+
+/* PAGE HEADER */
+.page-header { display: flex; align-items: flex-start; justify-content: space-between; margin-bottom: 1.8rem; }
+.page-header-left h1 { font-size: 1.5rem; font-weight: 700; color: var(--navy); }
+.page-header-left p { color: var(--muted); font-size: 0.85rem; margin-top: 0.2rem; }
+
+/* TEST LAYOUT */
+.test-layout { display: grid; grid-template-columns: 1fr 1fr; gap: 1.5rem; align-items: start; }
+.test-layout.full { grid-template-columns: 1fr; }
+
+/* CARD */
+.card { background: var(--white); border: 1px solid var(--border); border-radius: 14px; padding: 1.5rem; }
+.card-title { font-weight: 700; font-size: 0.95rem; color: var(--navy); margin-bottom: 1.2rem; display: flex; align-items: center; gap: 0.6rem; }
+.card-desc { font-size: 0.82rem; color: var(--muted); margin-bottom: 1.2rem; line-height: 1.5; }
+
+/* FORM */
+.form-group { display: flex; flex-direction: column; gap: 0.4rem; margin-bottom: 1rem; }
+.form-group:last-of-type { margin-bottom: 0; }
+label { font-size: 0.78rem; font-weight: 600; color: var(--muted); display: flex; align-items: center; gap: 0.4rem; }
+label .required { color: var(--red); }
+.form-control {
+  padding: 0.6rem 0.9rem; border: 1.5px solid var(--border); border-radius: 8px;
+  font-size: 0.88rem; font-family: inherit; outline: none; transition: border-color 0.2s; background: var(--white);
+}
+.form-control:focus { border-color: var(--blue); }
+.form-control::placeholder { color: #cbd5e1; }
+input[type="password"].form-control { font-family: 'DM Mono', monospace; letter-spacing: 2px; }
+
+/* STEP FORM */
+.step-header { display: flex; gap: 0.5rem; margin-bottom: 1.2rem; flex-wrap: wrap; }
+.step-btn {
+  padding: 0.3rem 0.8rem; border-radius: 20px; font-size: 0.78rem; font-weight: 600;
+  border: 1.5px solid var(--border); background: var(--white); cursor: pointer; transition: all 0.15s;
+  color: var(--muted);
+}
+.step-btn.active { background: var(--blue); color: white; border-color: var(--blue); }
+.step-panel { display: none; }
+.step-panel.active { display: block; }
+
+/* BUTTONS */
+.btn { padding: 0.55rem 1.2rem; border-radius: 8px; font-weight: 600; font-size: 0.85rem; cursor: pointer; border: none; display: inline-flex; align-items: center; gap: 0.4rem; transition: all 0.15s; font-family: inherit; }
+.btn-primary { background: var(--blue); color: white; }
+.btn-primary:hover { background: #1d4ed8; }
+.btn-primary:disabled { opacity: 0.6; cursor: not-allowed; }
+.btn-secondary { background: var(--white); color: var(--text); border: 1.5px solid var(--border); }
+.btn-secondary:hover { border-color: var(--blue); color: var(--blue); }
+.btn-danger { background: var(--red-light); color: var(--red); border: none; }
+.btn-sm { padding: 0.3rem 0.7rem; font-size: 0.78rem; }
+.btn-full { width: 100%; justify-content: center; margin-top: 1rem; }
+
+/* RESPONSE BOX */
+.response-box {
+  background: #0f172a;
+  border-radius: 10px;
+  overflow: hidden;
+}
+.response-header {
+  padding: 0.6rem 1rem;
+  background: #1e293b;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #94a3b8;
+}
+.response-status {
+  font-family: 'DM Mono', monospace;
+  font-weight: 700;
+  font-size: 0.8rem;
+}
+.response-status.s2xx { color: #86efac; }
+.response-status.s4xx { color: #fca5a5; }
+.response-status.s5xx { color: #fdba74; }
+.response-body {
+  padding: 1rem;
+  font-family: 'DM Mono', monospace;
+  font-size: 0.78rem;
+  color: #e2e8f0;
+  line-height: 1.6;
+  white-space: pre-wrap;
+  word-break: break-all;
+  max-height: 280px;
+  overflow-y: auto;
+  min-height: 60px;
+}
+.response-placeholder { color: #475569; font-style: italic; font-family: 'DM Sans', sans-serif; }
+
+/* SECTION LABEL */
+.section-label {
+  font-size: 0.72rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 1.5px; color: var(--muted); margin-bottom: 0.8rem;
+  padding-bottom: 0.5rem; border-bottom: 1px solid var(--border);
+}
+
+/* DIVIDER */
+.divider { height: 1px; background: var(--border); margin: 1.2rem 0; }
+
+/* TOKEN FIELD */
+.token-field-wrap { position: relative; }
+.token-field-wrap .form-control { padding-right: 2.5rem; font-family: 'DM Mono', monospace; font-size: 0.78rem; }
+.token-paste-btn {
+  position: absolute; right: 0.5rem; top: 50%; transform: translateY(-50%);
+  background: none; border: none; cursor: pointer; color: var(--blue); font-size: 0.8rem; padding: 0.2rem;
+}
+
+/* STATUS CHIPS */
+.status { display: inline-flex; align-items: center; gap: 0.3rem; padding: 0.2rem 0.7rem; border-radius: 20px; font-size: 0.72rem; font-weight: 600; }
+.status-active { background: var(--green-light); color: var(--green); }
+.status-warn { background: var(--amber-light); color: var(--amber); }
+.status-error { background: var(--red-light); color: var(--red); }
+
+/* INFO ROW */
+.info-row { display: flex; align-items: center; gap: 0.5rem; padding: 0.55rem 0; border-bottom: 1px solid var(--border); font-size: 0.85rem; }
+.info-row:last-child { border-bottom: none; }
+.info-key { font-weight: 600; color: var(--muted); min-width: 130px; font-size: 0.8rem; }
+.info-val { font-family: 'DM Mono', monospace; font-size: 0.82rem; color: var(--navy); }
+
+/* SPINNER */
+.spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(255,255,255,0.4); border-top-color: white; border-radius: 50%; animation: spin 0.7s linear infinite; }
+@keyframes spin { to { transform: rotate(360deg); } }
+
+/* TOAST */
+.toast-container { position: fixed; top: 1rem; right: 1rem; z-index: 500; display: flex; flex-direction: column; gap: 0.5rem; }
+.toast { background: var(--navy); color: white; padding: 0.8rem 1.2rem; border-radius: 10px; font-size: 0.85rem; font-weight: 500; box-shadow: 0 4px 16px rgba(0,0,0,0.2); animation: slideIn 0.3s ease; display: flex; align-items: center; gap: 0.6rem; }
+.toast.success { background: var(--green); }
+.toast.error { background: var(--red); }
+@keyframes slideIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* DYNAMIC LIST */
+.dynamic-list { display: flex; flex-direction: column; gap: 0.6rem; margin-bottom: 0.8rem; }
+.dynamic-item { background: var(--bg); border: 1px solid var(--border); border-radius: 8px; padding: 0.8rem; position: relative; }
+.dynamic-item-remove { position: absolute; top: 0.5rem; right: 0.5rem; background: none; border: none; cursor: pointer; color: var(--muted); font-size: 1rem; }
+.dynamic-item-remove:hover { color: var(--red); }
+.mini-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 0.6rem; }
+.mini-grid .form-group { margin-bottom: 0; }
+
+/* SCROLLBAR */
+::-webkit-scrollbar { width: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--border); border-radius: 10px; }
+</style>
+</head>
+<body>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sidebar-logo">
+    <div class="logo-icon">🔐</div>
+    <div>
+      <div class="logo-text">ms-auth</div>
+      <div class="logo-sub">Test Panel · Port 8082</div>
+    </div>
+  </div>
+
+  <nav class="sidebar-nav">
+    <div class="nav-section">
+      <div class="nav-section-label">Authentification</div>
+      <div class="nav-item active" onclick="showPage('login', this)">
+        <span class="icon">🔑</span> Login
+        <span class="nav-badge">POST</span>
+      </div>
+      <div class="nav-item" onclick="showPage('register', this)">
+        <span class="icon">📝</span> Inscription Patient
+        <span class="nav-badge">POST</span>
+      </div>
+      <div class="nav-item" onclick="showPage('me', this)">
+        <span class="icon">👤</span> Mon Profil
+        <span class="nav-badge">GET</span>
+      </div>
+      <div class="nav-item" onclick="showPage('verify', this)">
+        <span class="icon">✅</span> Vérifier Token
+        <span class="nav-badge">GET</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Mot de passe</div>
+      <div class="nav-item" onclick="showPage('forgot', this)">
+        <span class="icon">📧</span> Mot de passe oublié
+        <span class="nav-badge">POST</span>
+      </div>
+      <div class="nav-item" onclick="showPage('reset', this)">
+        <span class="icon">🔄</span> Réinitialiser
+        <span class="nav-badge">POST</span>
+      </div>
+      <div class="nav-item" onclick="showPage('change', this)">
+        <span class="icon">🔒</span> Changer mot de passe
+        <span class="nav-badge">POST</span>
+      </div>
+    </div>
+    <div class="nav-section">
+      <div class="nav-section-label">Administration</div>
+      <div class="nav-item" onclick="showPage('admin-users', this)">
+        <span class="icon">👥</span> Liste utilisateurs
+        <span class="nav-badge">GET</span>
+      </div>
+      <div class="nav-item" onclick="showPage('admin-create', this)">
+        <span class="icon">➕</span> Créer Personnel
+        <span class="nav-badge">POST</span>
+      </div>
+      <div class="nav-item" onclick="showPage('admin-toggle', this)">
+        <span class="icon">⚡</span> Toggle Compte
+        <span class="nav-badge">PUT</span>
+      </div>
+    </div>
+  </nav>
+
+  <!-- JWT TOKEN STORED -->
+  <div class="token-display">
+    <div class="token-label">🔑 Token JWT actuel</div>
+    <div class="token-value empty" id="sidebar-token">Aucun token — connectez-vous d'abord</div>
+    <button class="token-clear" onclick="clearToken()">✕ Effacer</button>
+  </div>
+
+  <div class="sidebar-footer">
+    <div class="server-indicator">
+      <div class="server-dot" id="server-dot"></div>
+      <span id="server-status">Vérification...</span>
+    </div>
+    <div>Base URL : <span style="font-family:'DM Mono',monospace;color:rgba(255,255,255,0.5)">localhost:8082</span></div>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+  <div class="topbar">
+    <div class="topbar-title" id="topbar-title">
+      Login <span class="topbar-subtitle">— POST /api/v1/auth/login</span>
+    </div>
+    <span class="method-badge method-post" id="topbar-method">POST</span>
+    <span class="endpoint-tag" id="topbar-endpoint">/api/v1/auth/login</span>
+    <button class="icon-btn" title="Vérifier serveur" onclick="checkServer()">🔌</button>
+  </div>
+
+  <div class="content">
+
+    <!-- ===== LOGIN ===== -->
+    <div class="page active" id="page-login">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>🔑 Login</h1>
+          <p>Authentification par email + mot de passe. Retourne un JWT.</p>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-post">POST</span> /api/v1/auth/login</div>
+          <div class="form-group">
+            <label>Email <span class="required">*</span></label>
+            <input class="form-control" id="login-email" type="email" placeholder="admin@medsys.ma" value="admin@medsys.ma">
+          </div>
+          <div class="form-group">
+            <label>Mot de passe <span class="required">*</span></label>
+            <input class="form-control" id="login-password" type="password" placeholder="••••••••" value="Admin123!">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="doLogin()">
+            🚀 Envoyer la requête
+          </button>
+          <div class="divider"></div>
+          <div class="card-desc">
+            💡 <strong>Rôles disponibles :</strong> PATIENT, MEDECIN, PERSONNEL, ADMIN.<br>
+            Le JWT retourné est automatiquement sauvegardé pour les requêtes suivantes.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header">
+              <span>JSON Response</span>
+              <span class="response-status" id="login-status">—</span>
+            </div>
+            <div class="response-body" id="login-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+          <div id="login-decoded" style="margin-top:1rem;display:none;">
+            <div class="section-label">Token décodé</div>
+            <div id="login-decoded-content"></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== REGISTER ===== -->
+    <div class="page" id="page-register">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>📝 Inscription Patient</h1>
+          <p>Formulaire complet en 6 étapes — crée le compte ET le dossier patient dans ms-patient.</p>
+        </div>
+      </div>
+
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-post">POST</span> /api/v1/auth/register</div>
+
+          <div class="step-header">
+            <button class="step-btn active" onclick="showStep('reg', 1, this)">1. Compte</button>
+            <button class="step-btn" onclick="showStep('reg', 2, this)">2. Identité</button>
+            <button class="step-btn" onclick="showStep('reg', 3, this)">3. Médical</button>
+            <button class="step-btn" onclick="showStep('reg', 4, this)">4. Antécédents</button>
+            <button class="step-btn" onclick="showStep('reg', 5, this)">5. Ordonnances</button>
+            <button class="step-btn" onclick="showStep('reg', 6, this)">6. Analyses</button>
+          </div>
+
+          <!-- Étape 1 -->
+          <div class="step-panel active" id="reg-step-1">
+            <div class="form-group"><label>Email <span class="required">*</span></label><input class="form-control" id="reg-email" type="email" placeholder="patient@email.ma"></div>
+            <div class="form-group"><label>Mot de passe <span class="required">*</span> (min. 8 car.)</label><input class="form-control" id="reg-password" type="password" placeholder="Minimum 8 caractères"></div>
+          </div>
+
+          <!-- Étape 2 -->
+          <div class="step-panel" id="reg-step-2">
+            <div class="mini-grid">
+              <div class="form-group"><label>Nom <span class="required">*</span></label><input class="form-control" id="reg-nom" placeholder="Alaoui"></div>
+              <div class="form-group"><label>Prénom <span class="required">*</span></label><input class="form-control" id="reg-prenom" placeholder="Mohammed"></div>
+              <div class="form-group"><label>CIN <span class="required">*</span></label><input class="form-control" id="reg-cin" placeholder="AB123456"></div>
+              <div class="form-group"><label>Date naissance <span class="required">*</span></label><input class="form-control" id="reg-dob" type="date" value="1990-01-15"></div>
+              <div class="form-group">
+                <label>Sexe</label>
+                <select class="form-control" id="reg-sexe">
+                  <option value="">-- Sélectionner --</option>
+                  <option value="MASCULIN">Masculin</option>
+                  <option value="FEMININ">Féminin</option>
+                </select>
+              </div>
+              <div class="form-group"><label>Téléphone</label><input class="form-control" id="reg-tel" placeholder="0600000000"></div>
+              <div class="form-group"><label>Adresse</label><input class="form-control" id="reg-adresse" placeholder="Rue..."></div>
+              <div class="form-group"><label>Ville</label><input class="form-control" id="reg-ville" placeholder="Casablanca"></div>
+            </div>
+          </div>
+
+          <!-- Étape 3 -->
+          <div class="step-panel" id="reg-step-3">
+            <div class="form-group">
+              <label>Groupe sanguin</label>
+              <select class="form-control" id="reg-groupe">
+                <option value="">-- Sélectionner --</option>
+                <option value="A_POSITIF">A+</option><option value="A_NEGATIF">A-</option>
+                <option value="B_POSITIF">B+</option><option value="B_NEGATIF">B-</option>
+                <option value="AB_POSITIF">AB+</option><option value="AB_NEGATIF">AB-</option>
+                <option value="O_POSITIF">O+</option><option value="O_NEGATIF">O-</option>
+              </select>
+            </div>
+            <div class="form-group"><label>Mutuelle</label><input class="form-control" id="reg-mutuelle" placeholder="CNSS, CNOPS..."></div>
+            <div class="form-group"><label>N° CNSS</label><input class="form-control" id="reg-cnss" placeholder="Numéro CNSS"></div>
+          </div>
+
+          <!-- Étape 4 : Antécédents -->
+          <div class="step-panel" id="reg-step-4">
+            <div class="card-desc">Optionnel — ajoutez les antécédents médicaux du patient.</div>
+            <div class="dynamic-list" id="antecedents-list"></div>
+            <button class="btn btn-secondary btn-sm" onclick="addAntecedent()">+ Ajouter un antécédent</button>
+          </div>
+
+          <!-- Étape 5 : Ordonnances -->
+          <div class="step-panel" id="reg-step-5">
+            <div class="card-desc">Optionnel — ordonnances antérieures du patient.</div>
+            <div class="dynamic-list" id="ordonnances-list"></div>
+            <button class="btn btn-secondary btn-sm" onclick="addOrdonnance()">+ Ajouter une ordonnance</button>
+          </div>
+
+          <!-- Étape 6 : Analyses -->
+          <div class="step-panel" id="reg-step-6">
+            <div class="card-desc">Optionnel — analyses antérieures.</div>
+            <div class="dynamic-list" id="analyses-list"></div>
+            <button class="btn btn-secondary btn-sm" onclick="addAnalyse()">+ Ajouter une analyse</button>
+          </div>
+
+          <button class="btn btn-primary btn-full" onclick="doRegister()" style="margin-top:1.2rem;">
+            🚀 Envoyer l'inscription
+          </button>
+        </div>
+
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header">
+              <span>JSON Response</span>
+              <span class="response-status" id="register-status">—</span>
+            </div>
+            <div class="response-body" id="register-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+          <div class="card-desc" style="margin-top:1rem;">
+            💡 L'inscription appelle <strong>ms-patient (port 8081)</strong> pour créer le dossier, puis crée le compte dans <strong>ms_auth_db</strong>.
+            Les deux services doivent être démarrés.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ME ===== -->
+    <div class="page" id="page-me">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>👤 Mon Profil</h1>
+          <p>Retourne les infos de l'utilisateur connecté à partir du token JWT.</p>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-get">GET</span> /api/v1/auth/me</div>
+          <div class="form-group">
+            <label>Bearer Token (JWT)</label>
+            <div class="token-field-wrap">
+              <input class="form-control" id="me-token" placeholder="eyJhbGciOi... (auto-rempli après login)">
+              <button class="token-paste-btn" onclick="pasteToken('me-token')" title="Coller le token sauvegardé">📋</button>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="doMe()">🚀 Envoyer la requête</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header"><span>JSON Response</span><span class="response-status" id="me-status">—</span></div>
+            <div class="response-body" id="me-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== VERIFY ===== -->
+    <div class="page" id="page-verify">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>✅ Vérifier Token</h1>
+          <p>Vérifie la validité d'un token JWT sans authentification.</p>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-get">GET</span> /api/v1/auth/verify?token=...</div>
+          <div class="form-group">
+            <label>Token JWT</label>
+            <div class="token-field-wrap">
+              <input class="form-control" id="verify-token" placeholder="eyJhbGciOi...">
+              <button class="token-paste-btn" onclick="pasteToken('verify-token')" title="Coller le token sauvegardé">📋</button>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="doVerify()">🚀 Vérifier</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header"><span>JSON Response</span><span class="response-status" id="verify-status">—</span></div>
+            <div class="response-body" id="verify-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== FORGOT PASSWORD ===== -->
+    <div class="page" id="page-forgot">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>📧 Mot de passe oublié</h1>
+          <p>Envoie un email avec lien de réinitialisation (valable 1 heure).</p>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-post">POST</span> /api/v1/auth/forgot-password</div>
+          <div class="form-group">
+            <label>Email du compte <span class="required">*</span></label>
+            <input class="form-control" id="forgot-email" type="email" placeholder="patient@email.ma">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="doForgot()">📤 Envoyer l'email</button>
+          <div class="card-desc" style="margin-top:1rem;">
+            ⚠️ Nécessite que <strong>Gmail SMTP</strong> soit configuré dans <code>application.yml</code> (spring.mail.*). Sans ça, la requête échouera avec 500.
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header"><span>JSON Response</span><span class="response-status" id="forgot-status">—</span></div>
+            <div class="response-body" id="forgot-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== RESET PASSWORD ===== -->
+    <div class="page" id="page-reset">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>🔄 Réinitialiser le mot de passe</h1>
+          <p>Utilise le token reçu par email pour définir un nouveau mot de passe.</p>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-post">POST</span> /api/v1/auth/reset-password</div>
+          <div class="form-group">
+            <label>Token de réinitialisation <span class="required">*</span></label>
+            <input class="form-control" id="reset-token" placeholder="UUID reçu par email...">
+          </div>
+          <div class="form-group">
+            <label>Nouveau mot de passe <span class="required">*</span></label>
+            <input class="form-control" id="reset-password" type="password" placeholder="Minimum 8 caractères">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="doReset()">🔄 Réinitialiser</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header"><span>JSON Response</span><span class="response-status" id="reset-status">—</span></div>
+            <div class="response-body" id="reset-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== CHANGE PASSWORD ===== -->
+    <div class="page" id="page-change">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>🔒 Changer mot de passe</h1>
+          <p>Modifie le mot de passe de l'utilisateur connecté (JWT requis).</p>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-post">POST</span> /api/v1/auth/change-password</div>
+          <div class="form-group">
+            <label>Bearer Token (JWT) <span class="required">*</span></label>
+            <div class="token-field-wrap">
+              <input class="form-control" id="change-token" placeholder="eyJhbGciOi...">
+              <button class="token-paste-btn" onclick="pasteToken('change-token')">📋</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>Ancien mot de passe <span class="required">*</span></label>
+            <input class="form-control" id="change-old" type="password" placeholder="••••••••">
+          </div>
+          <div class="form-group">
+            <label>Nouveau mot de passe <span class="required">*</span></label>
+            <input class="form-control" id="change-new" type="password" placeholder="Minimum 8 caractères">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="doChangePassword()">🔒 Changer</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header"><span>JSON Response</span><span class="response-status" id="change-status">—</span></div>
+            <div class="response-body" id="change-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN USERS ===== -->
+    <div class="page" id="page-admin-users">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>👥 Liste des utilisateurs</h1>
+          <p>Admin uniquement — liste tous les comptes du système.</p>
+        </div>
+        <button class="btn btn-primary" onclick="doAdminUsers()">🔄 Rafraîchir</button>
+      </div>
+      <div class="card" style="margin-bottom:1.5rem;">
+        <div class="card-title">🔑 Token Admin requis</div>
+        <div class="token-field-wrap" style="max-width:500px;">
+          <input class="form-control" id="admin-token" placeholder="eyJhbGciOi... (token avec rôle ADMIN)">
+          <button class="token-paste-btn" onclick="pasteToken('admin-token')">📋</button>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-get">GET</span> /api/v1/admin/users</div>
+          <button class="btn btn-primary btn-full" onclick="doAdminUsers()">🚀 Envoyer</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header"><span>JSON Response</span><span class="response-status" id="admin-users-status">—</span></div>
+            <div class="response-body" id="admin-users-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN CREATE PERSONNEL ===== -->
+    <div class="page" id="page-admin-create">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>➕ Créer Personnel / Médecin</h1>
+          <p>Admin uniquement — crée un compte pour un médecin, personnel ou admin.</p>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-post">POST</span> /api/v1/admin/personnel</div>
+          <div class="form-group">
+            <label>Token Admin <span class="required">*</span></label>
+            <div class="token-field-wrap">
+              <input class="form-control" id="create-token" placeholder="eyJhbGciOi...">
+              <button class="token-paste-btn" onclick="pasteToken('create-token')">📋</button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="mini-grid">
+            <div class="form-group"><label>Email <span class="required">*</span></label><input class="form-control" id="create-email" type="email" placeholder="dr.benali@medsys.ma"></div>
+            <div class="form-group"><label>Mot de passe <span class="required">*</span></label><input class="form-control" id="create-password" type="password" placeholder="Medecin123!"></div>
+            <div class="form-group"><label>Nom <span class="required">*</span></label><input class="form-control" id="create-nom" placeholder="Benali"></div>
+            <div class="form-group"><label>Prénom <span class="required">*</span></label><input class="form-control" id="create-prenom" placeholder="Omar"></div>
+            <div class="form-group"><label>CIN</label><input class="form-control" id="create-cin" placeholder="AB000000"></div>
+            <div class="form-group">
+              <label>Rôle <span class="required">*</span></label>
+              <select class="form-control" id="create-role">
+                <option value="MEDECIN">MEDECIN</option>
+                <option value="PERSONNEL">PERSONNEL</option>
+                <option value="ADMIN">ADMIN</option>
+              </select>
+            </div>
+          </div>
+          <button class="btn btn-primary btn-full" onclick="doCreatePersonnel()">🚀 Créer le compte</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header"><span>JSON Response</span><span class="response-status" id="create-status">—</span></div>
+            <div class="response-body" id="create-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== ADMIN TOGGLE ===== -->
+    <div class="page" id="page-admin-toggle">
+      <div class="page-header">
+        <div class="page-header-left">
+          <h1>⚡ Activer / Désactiver compte</h1>
+          <p>Admin uniquement — bascule l'état enabled/disabled d'un compte.</p>
+        </div>
+      </div>
+      <div class="test-layout">
+        <div class="card">
+          <div class="card-title"><span class="method-badge method-put">PUT</span> /api/v1/admin/users/{id}/toggle</div>
+          <div class="form-group">
+            <label>Token Admin <span class="required">*</span></label>
+            <div class="token-field-wrap">
+              <input class="form-control" id="toggle-token" placeholder="eyJhbGciOi...">
+              <button class="token-paste-btn" onclick="pasteToken('toggle-token')">📋</button>
+            </div>
+          </div>
+          <div class="form-group">
+            <label>ID Utilisateur <span class="required">*</span></label>
+            <input class="form-control" id="toggle-id" type="number" placeholder="1" value="1">
+          </div>
+          <button class="btn btn-primary btn-full" onclick="doToggle()">⚡ Basculer le statut</button>
+        </div>
+        <div class="card">
+          <div class="card-title">📥 Réponse</div>
+          <div class="response-box">
+            <div class="response-header"><span>JSON Response</span><span class="response-status" id="toggle-status">—</span></div>
+            <div class="response-body" id="toggle-response"><span class="response-placeholder">La réponse s'affichera ici...</span></div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<div class="toast-container" id="toast-container"></div>
+
+<script>
+const BASE = 'http://localhost:8082/api/v1';
+let savedToken = '';
+
+// =================== NAVIGATION ===================
+const pageConfig = {
+  login:        { title: 'Login',                  method: 'POST', endpoint: '/api/v1/auth/login' },
+  register:     { title: 'Inscription Patient',     method: 'POST', endpoint: '/api/v1/auth/register' },
+  me:           { title: 'Mon Profil',              method: 'GET',  endpoint: '/api/v1/auth/me' },
+  verify:       { title: 'Vérifier Token',          method: 'GET',  endpoint: '/api/v1/auth/verify' },
+  forgot:       { title: 'Mot de passe oublié',     method: 'POST', endpoint: '/api/v1/auth/forgot-password' },
+  reset:        { title: 'Réinitialiser mot de passe', method: 'POST', endpoint: '/api/v1/auth/reset-password' },
+  change:       { title: 'Changer mot de passe',   method: 'POST', endpoint: '/api/v1/auth/change-password' },
+  'admin-users':   { title: 'Liste utilisateurs (Admin)', method: 'GET',  endpoint: '/api/v1/admin/users' },
+  'admin-create':  { title: 'Créer Personnel (Admin)',    method: 'POST', endpoint: '/api/v1/admin/personnel' },
+  'admin-toggle':  { title: 'Toggle Compte (Admin)',      method: 'PUT',  endpoint: '/api/v1/admin/users/{id}/toggle' },
+};
+
+function showPage(id, navEl) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.getElementById('page-' + id).classList.add('active');
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  if (navEl) navEl.classList.add('active');
+
+  const cfg = pageConfig[id] || {};
+  const methodClass = { POST:'method-post', GET:'method-get', PUT:'method-put', DELETE:'method-delete' };
+  document.getElementById('topbar-title').innerHTML =
+    `${cfg.title || id} <span class="topbar-subtitle">— ${cfg.method} ${cfg.endpoint}</span>`;
+  const mb = document.getElementById('topbar-method');
+  mb.className = 'method-badge ' + (methodClass[cfg.method] || '');
+  mb.textContent = cfg.method || '';
+  document.getElementById('topbar-endpoint').textContent = cfg.endpoint || '';
+}
+
+function showStep(prefix, num, btn) {
+  document.querySelectorAll(`[id^="${prefix}-step-"]`).forEach(p => p.classList.remove('active'));
+  document.getElementById(`${prefix}-step-${num}`).classList.add('active');
+  btn.closest('.step-header').querySelectorAll('.step-btn').forEach(b => b.classList.remove('active'));
+  btn.classList.add('active');
+}
+
+// =================== TOKEN MANAGEMENT ===================
+function saveToken(token) {
+  savedToken = token;
+  const el = document.getElementById('sidebar-token');
+  if (token) {
+    el.textContent = token.substring(0, 80) + (token.length > 80 ? '...' : '');
+    el.className = 'token-value';
+    showToast('✅ Token JWT sauvegardé automatiquement', 'success');
+  }
+}
+
+function clearToken() {
+  savedToken = '';
+  const el = document.getElementById('sidebar-token');
+  el.textContent = 'Aucun token — connectez-vous d\'abord';
+  el.className = 'token-value empty';
+}
+
+function pasteToken(fieldId) {
+  if (savedToken) {
+    document.getElementById(fieldId).value = savedToken;
+    showToast('📋 Token collé', 'success');
+  } else {
+    showToast('Aucun token sauvegardé. Connectez-vous d\'abord.', 'error');
+  }
+}
+
+// =================== GENERIC REQUEST ===================
+async function request(method, url, body, token) {
+  const headers = { 'Content-Type': 'application/json' };
+  if (token) headers['Authorization'] = `Bearer ${token}`;
+  try {
+    const res = await fetch(url, {
+      method,
+      headers,
+      body: body ? JSON.stringify(body) : undefined,
+    });
+    let data;
+    try { data = await res.json(); } catch { data = { raw: await res.text() }; }
+    return { status: res.status, data };
+  } catch (e) {
+    return { status: 0, data: { error: 'Connexion refusée. Vérifiez que ms-auth tourne sur le port 8082.', detail: e.message } };
+  }
+}
+
+function showResponse(statusId, bodyId, result) {
+  const statusEl = document.getElementById(statusId);
+  const bodyEl = document.getElementById(bodyId);
+
+  const s = result.status;
+  statusEl.textContent = s === 0 ? '❌ ERR' : `${s} ${statusText(s)}`;
+  statusEl.className = 'response-status ' + (s >= 200 && s < 300 ? 's2xx' : s >= 400 && s < 500 ? 's4xx' : s >= 500 ? 's5xx' : '');
+
+  const pretty = JSON.stringify(result.data, null, 2);
+  bodyEl.innerHTML = syntaxHighlight(pretty);
+  return result;
+}
+
+function statusText(code) {
+  const map = { 200:'OK', 201:'Created', 400:'Bad Request', 401:'Unauthorized', 403:'Forbidden', 404:'Not Found', 409:'Conflict', 500:'Internal Server Error' };
+  return map[code] || '';
+}
+
+function syntaxHighlight(json) {
+  return json
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/("(\\u[a-zA-Z0-9]{4}|\\[^u]|[^\\"])*"(\s*:)?|\b(true|false|null)\b|-?\d+(?:\.\d*)?(?:[eE][+\-]?\d+)?)/g, match => {
+      let cls = 'color:#93c5fd'; // number
+      if (/^"/.test(match)) {
+        cls = /:$/.test(match) ? 'color:#f9a8d4' : 'color:#86efac'; // key vs string
+      } else if (/true|false/.test(match)) {
+        cls = 'color:#fdba74';
+      } else if (/null/.test(match)) {
+        cls = 'color:#94a3b8';
+      }
+      return `<span style="${cls}">${match}</span>`;
+    });
+}
+
+// =================== LOGIN ===================
+async function doLogin() {
+  const btn = event.target;
+  btn.innerHTML = '<span class="spinner"></span> Envoi...';
+  btn.disabled = true;
+
+  const body = {
+    email: document.getElementById('login-email').value.trim(),
+    password: document.getElementById('login-password').value,
+  };
+
+  const result = await request('POST', `${BASE}/auth/login`, body);
+  showResponse('login-status', 'login-response', result);
+
+  if (result.status === 200 && result.data.token) {
+    saveToken(result.data.token);
+    // Decode token
+    try {
+      const parts = result.data.token.split('.');
+      const payload = JSON.parse(atob(parts[1]));
+      const dec = document.getElementById('login-decoded');
+      dec.style.display = 'block';
+      document.getElementById('login-decoded-content').innerHTML = `
+        <div class="info-row"><span class="info-key">Sujet (email)</span><span class="info-val">${payload.sub || '—'}</span></div>
+        <div class="info-row"><span class="info-key">Rôle</span><span class="info-val">${payload.role || '—'}</span></div>
+        <div class="info-row"><span class="info-key">Nom</span><span class="info-val">${payload.nom || '—'} ${payload.prenom || ''}</span></div>
+        <div class="info-row"><span class="info-key">Patient ID</span><span class="info-val">${payload.patientId != null ? payload.patientId : '—'}</span></div>
+        <div class="info-row"><span class="info-key">Expiration</span><span class="info-val">${new Date(payload.exp * 1000).toLocaleString('fr-FR')}</span></div>
+      `;
+    } catch {}
+  }
+
+  btn.innerHTML = '🚀 Envoyer la requête';
+  btn.disabled = false;
+}
+
+// =================== REGISTER ===================
+let antecedentsData = [];
+let ordonnancesData = [];
+let analysesData = [];
+
+function addAntecedent() {
+  const id = Date.now();
+  antecedentsData.push({ _id: id });
+  const list = document.getElementById('antecedents-list');
+  const div = document.createElement('div');
+  div.className = 'dynamic-item'; div.id = 'ant-' + id;
+  div.innerHTML = `
+    <button class="dynamic-item-remove" onclick="removeItem('ant-${id}', antecedentsData, ${id})">✕</button>
+    <div class="mini-grid">
+      <div class="form-group">
+        <label>Type</label>
+        <select class="form-control" id="ant-type-${id}">
+          <option value="MEDICAL">Médical</option>
+          <option value="CHIRURGICAL">Chirurgical</option>
+          <option value="FAMILIAL">Familial</option>
+          <option value="ALLERGIE">Allergie</option>
+        </select>
+      </div>
+      <div class="form-group"><label>Date apparition</label><input class="form-control" id="ant-date-${id}" type="date"></div>
+      <div class="form-group" style="grid-column:1/-1"><label>Description</label><input class="form-control" id="ant-desc-${id}" placeholder="Description..."></div>
+    </div>
+  `;
+  list.appendChild(div);
+}
+
+function addOrdonnance() {
+  const id = Date.now();
+  ordonnancesData.push({ _id: id });
+  const list = document.getElementById('ordonnances-list');
+  const div = document.createElement('div');
+  div.className = 'dynamic-item'; div.id = 'ord-' + id;
+  div.innerHTML = `
+    <button class="dynamic-item-remove" onclick="removeItem('ord-${id}', ordonnancesData, ${id})">✕</button>
+    <div class="mini-grid">
+      <div class="form-group"><label>Date</label><input class="form-control" id="ord-date-${id}" type="date"></div>
+      <div class="form-group">
+        <label>Type</label>
+        <select class="form-control" id="ord-type-${id}">
+          <option value="TRAITEMENT_COURT">Traitement court</option>
+          <option value="TRAITEMENT_LONG">Traitement long</option>
+          <option value="RENOUVELLEMENT">Renouvellement</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1"><label>Médicaments</label><input class="form-control" id="ord-meds-${id}" placeholder="Ex: Paracétamol 1g, Amoxicilline 500mg..."></div>
+      <div class="form-group" style="grid-column:1/-1"><label>Observations</label><input class="form-control" id="ord-obs-${id}" placeholder="Observations..."></div>
+    </div>
+  `;
+  list.appendChild(div);
+}
+
+function addAnalyse() {
+  const id = Date.now();
+  analysesData.push({ _id: id });
+  const list = document.getElementById('analyses-list');
+  const div = document.createElement('div');
+  div.className = 'dynamic-item'; div.id = 'ana-' + id;
+  div.innerHTML = `
+    <button class="dynamic-item-remove" onclick="removeItem('ana-${id}', analysesData, ${id})">✕</button>
+    <div class="mini-grid">
+      <div class="form-group"><label>Type</label><input class="form-control" id="ana-type-${id}" placeholder="NFS, TSH, Glycémie..."></div>
+      <div class="form-group"><label>Date</label><input class="form-control" id="ana-date-${id}" type="date"></div>
+      <div class="form-group"><label>Laboratoire</label><input class="form-control" id="ana-lab-${id}" placeholder="Labo Central..."></div>
+      <div class="form-group">
+        <label>Statut</label>
+        <select class="form-control" id="ana-statut-${id}">
+          <option value="TERMINE">Terminé</option>
+          <option value="EN_ATTENTE">En attente</option>
+        </select>
+      </div>
+      <div class="form-group" style="grid-column:1/-1"><label>Résultats</label><input class="form-control" id="ana-res-${id}" placeholder="Résultats de l'analyse..."></div>
+    </div>
+  `;
+  list.appendChild(div);
+}
+
+function removeItem(elemId, arr, id) {
+  document.getElementById(elemId)?.remove();
+  const idx = arr.findIndex(x => x._id === id);
+  if (idx > -1) arr.splice(idx, 1);
+}
+
+async function doRegister() {
+  const btn = event.target;
+  btn.innerHTML = '<span class="spinner"></span> Inscription...';
+  btn.disabled = true;
+
+  const body = {
+    email: document.getElementById('reg-email').value.trim(),
+    password: document.getElementById('reg-password').value,
+    nom: document.getElementById('reg-nom').value.trim(),
+    prenom: document.getElementById('reg-prenom').value.trim(),
+    cin: document.getElementById('reg-cin').value.trim(),
+    dateNaissance: document.getElementById('reg-dob').value || null,
+    sexe: document.getElementById('reg-sexe').value || null,
+    telephone: document.getElementById('reg-tel').value || null,
+    adresse: document.getElementById('reg-adresse').value || null,
+    ville: document.getElementById('reg-ville').value || null,
+    groupeSanguin: document.getElementById('reg-groupe').value || null,
+    mutuelle: document.getElementById('reg-mutuelle').value || null,
+    numeroCNSS: document.getElementById('reg-cnss').value || null,
+    antecedents: antecedentsData.map(a => ({
+      type: document.getElementById(`ant-type-${a._id}`)?.value,
+      description: document.getElementById(`ant-desc-${a._id}`)?.value,
+      dateApparition: document.getElementById(`ant-date-${a._id}`)?.value || null,
+    })),
+    ordonnances: ordonnancesData.map(o => ({
+      date: document.getElementById(`ord-date-${o._id}`)?.value || null,
+      type: document.getElementById(`ord-type-${o._id}`)?.value,
+      medicaments: document.getElementById(`ord-meds-${o._id}`)?.value,
+      observations: document.getElementById(`ord-obs-${o._id}`)?.value || null,
+    })),
+    analyses: analysesData.map(a => ({
+      typeAnalyse: document.getElementById(`ana-type-${a._id}`)?.value,
+      dateAnalyse: document.getElementById(`ana-date-${a._id}`)?.value || null,
+      resultats: document.getElementById(`ana-res-${a._id}`)?.value || null,
+      laboratoire: document.getElementById(`ana-lab-${a._id}`)?.value || null,
+      statut: document.getElementById(`ana-statut-${a._id}`)?.value,
+    })),
+  };
+
+  const result = await request('POST', `${BASE}/auth/register`, body);
+  showResponse('register-status', 'register-response', result);
+  if (result.status === 201 && result.data.token) saveToken(result.data.token);
+
+  btn.innerHTML = '🚀 Envoyer l\'inscription';
+  btn.disabled = false;
+}
+
+// =================== ME ===================
+async function doMe() {
+  const token = document.getElementById('me-token').value.trim() || savedToken;
+  const result = await request('GET', `${BASE}/auth/me`, null, token);
+  showResponse('me-status', 'me-response', result);
+}
+
+// =================== VERIFY ===================
+async function doVerify() {
+  const token = document.getElementById('verify-token').value.trim() || savedToken;
+  const result = await request('GET', `${BASE}/auth/verify?token=${encodeURIComponent(token)}`);
+  showResponse('verify-status', 'verify-response', result);
+}
+
+// =================== FORGOT ===================
+async function doForgot() {
+  const result = await request('POST', `${BASE}/auth/forgot-password`, {
+    email: document.getElementById('forgot-email').value.trim()
+  });
+  showResponse('forgot-status', 'forgot-response', result);
+}
+
+// =================== RESET ===================
+async function doReset() {
+  const result = await request('POST', `${BASE}/auth/reset-password`, {
+    token: document.getElementById('reset-token').value.trim(),
+    newPassword: document.getElementById('reset-password').value,
+  });
+  showResponse('reset-status', 'reset-response', result);
+}
+
+// =================== CHANGE PASSWORD ===================
+async function doChangePassword() {
+  const token = document.getElementById('change-token').value.trim() || savedToken;
+  const result = await request('POST', `${BASE}/auth/change-password`, {
+    oldPassword: document.getElementById('change-old').value,
+    newPassword: document.getElementById('change-new').value,
+  }, token);
+  showResponse('change-status', 'change-response', result);
+}
+
+// =================== ADMIN ===================
+async function doAdminUsers() {
+  const token = document.getElementById('admin-token').value.trim() || savedToken;
+  const result = await request('GET', `${BASE}/admin/users`, null, token);
+  showResponse('admin-users-status', 'admin-users-response', result);
+}
+
+async function doCreatePersonnel() {
+  const token = document.getElementById('create-token').value.trim() || savedToken;
+  const result = await request('POST', `${BASE}/admin/personnel`, {
+    email: document.getElementById('create-email').value.trim(),
+    password: document.getElementById('create-password').value,
+    nom: document.getElementById('create-nom').value.trim(),
+    prenom: document.getElementById('create-prenom').value.trim(),
+    cin: document.getElementById('create-cin').value.trim() || null,
+    role: document.getElementById('create-role').value,
+  }, token);
+  showResponse('create-status', 'create-response', result);
+  if (result.status === 201 && result.data.token) saveToken(result.data.token);
+}
+
+async function doToggle() {
+  const token = document.getElementById('toggle-token').value.trim() || savedToken;
+  const id = document.getElementById('toggle-id').value;
+  const result = await request('PUT', `${BASE}/admin/users/${id}/toggle`, null, token);
+  showResponse('toggle-status', 'toggle-response', result);
+}
+
+// =================== SERVER CHECK ===================
+async function checkServer() {
+  try {
+    const res = await fetch(`${BASE}/auth/verify?token=test`, { signal: AbortSignal.timeout(3000) });
+    document.getElementById('server-dot').className = 'server-dot online';
+    document.getElementById('server-status').textContent = 'ms-auth en ligne ✓';
+    showToast('✅ ms-auth répond sur le port 8082', 'success');
+  } catch {
+    document.getElementById('server-dot').className = 'server-dot';
+    document.getElementById('server-status').textContent = 'ms-auth hors ligne';
+    showToast('❌ ms-auth ne répond pas. Vérifiez IntelliJ.', 'error');
+  }
+}
+
+// =================== TOAST ===================
+function showToast(msg, type = 'info') {
+  const tc = document.getElementById('toast-container');
+  const t = document.createElement('div');
+  t.className = `toast ${type}`;
+  t.textContent = msg;
+  tc.appendChild(t);
+  setTimeout(() => t.remove(), 3500);
+}
+
+// =================== INIT ===================
+checkServer();
+</script>
+</body>
+</html>

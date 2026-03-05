@@ -1,0 +1,59 @@
+server:
+  port: 8082
+
+spring:
+  application:
+    name: ms-auth
+
+  datasource:
+    url: jdbc:mysql://localhost:3307/ms_auth_db?createDatabaseIfNotExist=true&useUnicode=true&characterEncoding=UTF-8&serverTimezone=Africa/Casablanca
+    username: root
+    password:
+    driver-class-name: com.mysql.cj.jdbc.Driver
+
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect
+
+  jackson:
+    serialization:
+      write-dates-as-timestamps: false
+
+  # Configuration email (pour mot de passe oublié)
+  # Remplacer par vos vraies infos Gmail/SMTP
+  mail:
+    host: smtp.gmail.com
+    port: 587
+    username: medsys.hospital@gmail.com
+    password: votre-app-password
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+jwt:
+  secret: medsys-hospital-jwt-secret-key-2026-very-long-and-secure-string
+  expiration: 86400000       # 24 heures
+  refresh-expiration: 604800000  # 7 jours
+
+# URL du ms-patient pour synchronisation
+ms-patient:
+  url: http://localhost:8081
+
+springdoc:
+  api-docs:
+    path: /v3/api-docs
+  swagger-ui:
+    path: /swagger-ui.html
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info

@@ -63,6 +63,10 @@ public class DossierMedical {
     @Builder.Default
     private List<CertificatMedical> certificats = new ArrayList<>();
 
+    @OneToMany(mappedBy = "dossierMedical", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<DocumentPatient> documents = new ArrayList<>();
+
     @CreationTimestamp
     @Column(updatable = false)
     private LocalDateTime dateCreation;

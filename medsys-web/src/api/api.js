@@ -36,9 +36,36 @@ export const patientApi = {
   delete: (id) => PATIENT_API.delete(`/patients/${id}`),
   search: (q, params) => PATIENT_API.get('/patients/search', { params: { q, ...params } }),
   stats: () => PATIENT_API.get('/patients/statistiques'),
+
+  // Portail patient
   me: () => PATIENT_API.get('/patient/me'),
+  updateMe: (data) => PATIENT_API.patch('/patient/me', data),
   myDossier: () => PATIENT_API.get('/patient/me/dossier'),
   dossier: (id) => PATIENT_API.get(`/patients/${id}/dossier`),
+
+  // Notifications
+  notifications: () => PATIENT_API.get('/patient/me/notifications'),
+
+  // PDF & QR Code
+  exportPdf: () => PATIENT_API.get('/patient/me/dossier/pdf', { responseType: 'blob' }),
+  getQrCode: () => PATIENT_API.get('/patient/me/qrcode', { responseType: 'blob' }),
+
+  // Documents
+  uploadDocument: (formData) => PATIENT_API.post('/patient/me/documents', formData, {
+    headers: { 'Content-Type': 'multipart/form-data' }
+  }),
+  getDocuments: () => PATIENT_API.get('/patient/me/documents'),
+  deleteDocument: (id) => PATIENT_API.delete(`/patient/me/documents/${id}`),
+  getDocumentFileUrl: (id) => `/api/v1/patient/me/documents/${id}/fichier`,
+
+  // Messagerie
+  getMessages: () => PATIENT_API.get('/patient/me/messages'),
+  envoyerMessage: (data) => PATIENT_API.post('/patient/me/messages', data),
+  marquerLu: (id) => PATIENT_API.put(`/patient/me/messages/${id}/lu`),
+
+  // Rendez-vous
+  getRdv: () => PATIENT_API.get('/patient/me/rdv'),
+  annulerRdv: (id) => PATIENT_API.put(`/patient/me/rdv/${id}/annuler`),
 }
 
 export const adminApi = {

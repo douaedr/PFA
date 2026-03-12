@@ -63,3 +63,6 @@ jwt:
 app:
   upload:
     dir: uploads/patients
+
+ms-rdv:
+  url: ${MS_RDV_URL:}

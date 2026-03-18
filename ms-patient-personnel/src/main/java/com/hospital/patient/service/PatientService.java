@@ -52,7 +52,9 @@ public class PatientService {
                             .actif(item.getActif() != null ? item.getActif() : true)
                             .build();
                     dossier.getAntecedents().add(ant);
-                } catch (Exception ignored) {}
+                } catch (IllegalArgumentException e) {
+                    log.warn("Type d'antécédent invalide ignoré: {}", item.getType());
+                }
             }
         }
 
@@ -74,7 +76,9 @@ public class PatientService {
                         ord.getLignes().add(ligne);
                     }
                     dossier.getOrdonnances().add(ord);
-                } catch (Exception ignored) {}
+                } catch (IllegalArgumentException e) {
+                    log.warn("Type d'ordonnance invalide ignoré: {}", item.getType());
+                }
             }
         }
 
@@ -90,7 +94,9 @@ public class PatientService {
                             .statut(item.getStatut() != null ? StatutAnalyse.valueOf(item.getStatut()) : StatutAnalyse.EN_ATTENTE)
                             .build();
                     dossier.getAnalyses().add(analyse);
-                } catch (Exception ignored) {}
+                } catch (IllegalArgumentException e) {
+                    log.warn("Statut d'analyse invalide ignoré: {}", item.getStatut());
+                }
             }
         }
 

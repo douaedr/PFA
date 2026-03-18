@@ -42,10 +42,10 @@ public class SecurityConfig {
                     "/v3/api-docs/**",
                     "/api/v1/auth/**"
                 ).permitAll()
-                .requestMatchers("/api/v1/patients/**").permitAll()
+                .requestMatchers("/api/v1/patients/**").hasAnyRole("DIRECTEUR", "ADMIN", "MEDECIN")
                 .requestMatchers("/api/v1/patient/**").hasRole("PATIENT")
                 .requestMatchers("/api/v1/directeur/**").hasAnyRole("DIRECTEUR", "ADMIN")
-                .anyRequest().permitAll()
+                .anyRequest().authenticated()
             )
             .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
 

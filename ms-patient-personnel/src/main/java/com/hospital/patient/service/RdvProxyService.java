@@ -7,6 +7,7 @@ import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
+import org.springframework.web.util.UriComponentsBuilder;
 
 import java.util.List;
 
@@ -30,7 +31,10 @@ public class RdvProxyService {
         }
 
         try {
-            String url = msRdvUrl + "/api/v1/rdv/patient/" + patientId;
+            String url = UriComponentsBuilder.fromHttpUrl(msRdvUrl)
+                    .path("/api/v1/rdv/patient/{patientId}")
+                    .buildAndExpand(patientId)
+                    .toUriString();
             ResponseEntity<List<RendezVousDTO>> response = restTemplate.exchange(
                 url,
                 HttpMethod.GET,
@@ -66,7 +70,11 @@ public class RdvProxyService {
     public boolean annulerRdv(Long rdvId, Long patientId) {
         if (msRdvUrl == null || msRdvUrl.isBlank()) return false;
         try {
-            String url = msRdvUrl + "/api/v1/rdv/" + rdvId + "/annuler?patientId=" + patientId;
+            String url = UriComponentsBuilder.fromHttpUrl(msRdvUrl)
+                    .path("/api/v1/rdv/{rdvId}/annuler")
+                    .queryParam("patientId", patientId)
+                    .buildAndExpand(rdvId)
+                    .toUriString();
             restTemplate.put(url, null);
             return true;
         } catch (Exception e) {

@@ -46,10 +46,12 @@ jwt:
 ms-patient:
   url: ${MS_PATIENT_URL:http://localhost:8081}
 
-# Origines autorisées pour CORS
+# Configuration application
 app:
   cors:
     allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173,http://localhost:3000}
+  frontend:
+    url: ${FRONTEND_URL:http://localhost:5173}
 
 springdoc:
   api-docs:

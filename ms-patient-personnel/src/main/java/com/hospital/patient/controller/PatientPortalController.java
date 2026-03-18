@@ -11,6 +11,7 @@ import com.hospital.patient.security.JwtService;
 import com.hospital.patient.service.*;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.core.io.Resource;
 import org.springframework.http.*;
 import org.springframework.web.bind.annotation.*;
@@ -20,6 +21,7 @@ import java.io.IOException;
 import java.util.List;
 import java.util.Map;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/v1/patient")
 @RequiredArgsConstructor
@@ -124,7 +126,9 @@ public class PatientPortalController {
             analysesEnAttente = dossier.getAnalyses() != null
                 ? dossier.getAnalyses().stream().filter(a -> "EN_ATTENTE".equals(a.getStatut())).count()
                 : 0;
-        } catch (Exception ignored) {}
+        } catch (Exception e) {
+            log.warn("Impossible de récupérer le dossier pour les notifications du patient {}: {}", patientId, e.getMessage());
+        }
 
         long messagesNonLus = messageService.countUnreadFromMedecin(patientId);
 

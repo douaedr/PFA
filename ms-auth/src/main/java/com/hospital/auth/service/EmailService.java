@@ -17,8 +17,8 @@ public class EmailService {
     @Value("${spring.mail.username:medsys@hospital.ma}")
     private String fromEmail;
 
-    // URL frontend pour reset (à adapter selon l'env)
-    private static final String FRONTEND_URL = "http://localhost:5173";
+    @Value("${app.frontend.url:http://localhost:5173}")
+    private String frontendUrl;
 
     public void sendPasswordResetEmail(String to, String nom, String token) {
         try {
@@ -30,7 +30,7 @@ public class EmailService {
                 "Bonjour " + nom + ",\n\n" +
                 "Vous avez demandé la réinitialisation de votre mot de passe.\n\n" +
                 "Cliquez sur le lien ci-dessous (valable 1 heure) :\n" +
-                FRONTEND_URL + "/reset-password?token=" + token + "\n\n" +
+                frontendUrl + "/reset-password?token=" + token + "\n\n" +
                 "Si vous n'avez pas fait cette demande, ignorez cet email.\n\n" +
                 "Cordialement,\nL'équipe MedSys"
             );
@@ -55,7 +55,7 @@ public class EmailService {
                 "Email : " + to + "\n" +
                 "Mot de passe temporaire : " + tempPassword + "\n\n" +
                 "Veuillez vous connecter et changer votre mot de passe dès que possible.\n" +
-                FRONTEND_URL + "/login\n\n" +
+                frontendUrl + "/login\n\n" +
                 "Cordialement,\nL'administrateur MedSys"
             );
             mailSender.send(message);

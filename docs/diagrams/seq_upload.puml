@@ -1,0 +1,42 @@
+@startuml
+title Sequence : Upload Document (ms-patient)
+
+actor Patient
+participant "PatientPortalController\n/me/documents" as CTRL
+participant "DocumentService" as SVC
+participant "DossierMedicalRepository" as DREPO
+participant "DocumentPatientRepository" as DOCREP
+folder "uploads/" as FS
+database "ms_patient_db" as DB
+
+Patient -> CTRL : POST /me/documents\nmultipart: {file, typeDocument, description}
+
+CTRL -> SVC : uploadDocument(patientId, file, type, desc)
+
+SVC -> SVC : Valide contentType\n(PDF, image uniquement)
+SVC -> SVC : Valide taille <= 5MB
+
+alt fichier invalide
+  SVC --> CTRL : throw RuntimeException
+  CTRL --> Patient : 400 Bad Request
+end
+
+SVC -> DREPO : findByPatient_Id(patientId)
+DREPO -> DB : SELECT dossier WHERE patient_id=?
+DB --> DREPO : DossierMedical
+
+SVC -> SVC : Protection path traversal:\nnormalise le nom du fichier
+SVC -> SVC : Genere UUID filename:\n{uuid}.{ext}
+
+SVC -> FS : Files.copy(inputStream,\n  uploads/{uuid}.ext)
+
+SVC -> DOCREP : save(new DocumentPatient {\n  dossierMedical,\n  nomFichierOriginal, nomFichierStocke,\n  cheminFichier, tailleFichier,\n  contentType, typeDocument,\n  description\n})
+DOCREP -> DB : INSERT INTO document_patient
+
+DB --> DOCREP : DocumentPatient sauvegarde
+DOCREP --> SVC : DocumentPatient
+
+SVC --> CTRL : DocumentPatientDTO
+CTRL --> Patient : 201 Created\nDocumentPatientDTO
+
+@enduml

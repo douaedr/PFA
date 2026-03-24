@@ -1,0 +1,49 @@
+@startuml
+title Sequence : Reinitialisation Mot de Passe (ms-auth)
+
+actor Utilisateur
+participant "AuthController" as CTRL
+participant "AuthService" as SVC
+participant "UserAccountRepository" as REPO
+participant "EmailService" as EMAIL
+participant "SMTP Server" as SMTP
+database "ms_auth_db" as DB
+
+== Etape 1: Demande de reinitialisation ==
+
+Utilisateur -> CTRL : POST /forgot-password\n{email}
+CTRL -> SVC : forgotPassword(ForgotPasswordRequest)
+SVC -> REPO : findByEmail(email)
+REPO -> DB : SELECT * WHERE email=?
+DB --> REPO : UserAccount
+
+SVC -> SVC : Genere UUID token
+SVC -> SVC : resetTokenExpiry = now() + 1h
+SVC -> REPO : save(user avec resetToken + expiry)
+REPO -> DB : UPDATE user_account SET\nreset_token=?, reset_token_expiry=?
+
+SVC -> EMAIL : sendPasswordResetEmail(email, nom, token)
+EMAIL -> SMTP : MIME message avec lien:\n/reset-password?token={uuid}
+SMTP --> Utilisateur : Email recu
+
+CTRL --> Utilisateur : 200 OK "Email envoye"
+
+== Etape 2: Reinitialisation ==
+
+Utilisateur -> CTRL : POST /reset-password\n{token, newPassword}
+CTRL -> SVC : resetPassword(ResetPasswordRequest)
+SVC -> REPO : findByResetToken(token)
+REPO --> SVC : UserAccount
+
+alt token expire
+  SVC --> CTRL : throw AuthException("Token expire")
+  CTRL --> Utilisateur : 400 Bad Request
+end
+
+SVC -> SVC : Encode newPassword (BCrypt)
+SVC -> REPO : save(user {\n  password=encoded,\n  resetToken=null,\n  resetTokenExpiry=null\n})
+REPO -> DB : UPDATE user_account
+
+CTRL --> Utilisateur : 200 OK "Mot de passe reinitialise"
+
+@enduml

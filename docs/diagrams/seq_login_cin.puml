@@ -1,0 +1,32 @@
+@startuml
+title Sequence : Login Patient par CIN (ms-patient)
+
+actor Patient
+participant "AuthController\n/api/v1/auth/login" as CTRL
+participant "PatientRepository" as REPO
+participant "JwtService" as JWT
+database "ms_patient_db" as DB
+
+Patient -> CTRL : POST /api/v1/auth/login\n{cin, dateNaissance}
+CTRL -> REPO : findByCin(cin)
+REPO -> DB : SELECT * FROM patient WHERE cin=?
+DB --> REPO : Optional<Patient>
+
+alt patient non trouve
+  CTRL --> Patient : 401 "CIN introuvable"
+end
+
+CTRL -> CTRL : Verifie dateNaissance == patient.dateNaissance
+
+alt dateNaissance incorrecte
+  CTRL --> Patient : 401 "Identifiants invalides"
+end
+
+CTRL -> JWT : generateToken(patient.id, patient.cin)
+JWT -> JWT : Build claims:\n{patientId, cin, role="PATIENT"}
+JWT -> JWT : sign HMAC-SHA256 (24h)
+JWT --> CTRL : token JWT
+
+CTRL --> Patient : 200 LoginResponse\n{token, type:"Bearer",\npatientId, cin, nom, prenom}
+
+@enduml

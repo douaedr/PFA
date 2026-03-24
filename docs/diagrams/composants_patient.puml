@@ -1,0 +1,90 @@
+@startuml
+title Diagramme de Composants - ms-patient-personnel
+skinparam componentStyle rectangle
+
+package "ms-patient-personnel (:8081)" {
+
+  package "Controller Layer" {
+    [PatientController\n/api/v1/patients] as PC
+    [PatientPortalController\n/api/v1/patient] as PPC
+    [DirecteurController\n/api/v1/directeur] as DC
+    [AuthController\n/api/v1/auth] as AC
+  }
+
+  package "Security Layer" {
+    [JwtAuthFilter] as JAF
+    [SecurityConfig] as SC
+    [JwtService] as JS
+  }
+
+  package "Service Layer" {
+    [PatientService] as PS
+    [DocumentService] as DOCS
+    [MessageService] as MS
+    [PdfService\n(OpenPDF)] as PDF
+    [QrCodeService\n(ZXing)] as QR
+    [RdvProxyService] as RDV
+    [DirecteurService] as DS
+  }
+
+  package "Data Layer" {
+    [PatientRepository] as PREPO
+    [DossierMedicalRepository] as DREPO
+    [DocumentPatientRepository] as DOCREP
+    [MessagePatientRepository] as MREP
+    [AnalyseRepository] as AREP
+    [MedecinRepository] as MREPO
+    database "ms_patient_db\n(MySQL :3307)" as DB
+    folder "uploads/\n(fichiers)" as FS
+  }
+
+  package "Mapper & Exceptions" {
+    [PatientMapper] as MAP
+    [GlobalExceptionHandler] as GEH
+  }
+}
+
+[Frontend\n:5173] --> PC : REST HTTPS
+[Frontend\n:5173] --> PPC : REST HTTPS
+[Frontend\n:5173] --> DC : REST HTTPS
+[Frontend\n:5173] --> AC : REST HTTPS
+
+SC --> JAF : filtre
+JAF --> JS
+
+PC --> PS
+PPC --> PS
+PPC --> DOCS
+PPC --> MS
+PPC --> PDF
+PPC --> QR
+PPC --> RDV
+DC --> DS
+DC --> PS
+DC --> PDF
+DC --> RDV
+AC --> JS
+
+PS --> PREPO
+PS --> DREPO
+PS --> MAP
+DOCS --> DOCREP
+DOCS --> DREPO
+DOCS --> FS
+MS --> MREP
+DS --> PREPO
+DS --> AREP
+DS --> DOCREP
+DS --> MREPO
+
+PREPO --> DB
+DREPO --> DB
+DOCREP --> DB
+MREP --> DB
+AREP --> DB
+MREPO --> DB
+
+RDV --> [ms-rdv] : REST HTTP
+[ms-auth\n:8082] --> PC : POST /api/v1/patients\n(creation patient)
+
+@enduml

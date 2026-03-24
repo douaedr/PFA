@@ -1,0 +1,212 @@
+@startuml
+title Diagramme de Classes - Entites JPA ms-patient
+skinparam classAttributeIconSize 0
+
+' ===== ENUMS =====
+enum Sexe { MASCULIN; FEMININ }
+enum GroupeSanguin { A_POSITIF; A_NEGATIF; B_POSITIF; B_NEGATIF; AB_POSITIF; AB_NEGATIF; O_POSITIF; O_NEGATIF }
+enum TypeAntecedent { MEDICAL; CHIRURGICAL; FAMILIAL; ALLERGIQUE; GYNECOLOGIQUE; TOXICOLOGIQUE; VACCINAL }
+enum NiveauSeverite { FAIBLE; MODERE; SEVERE; CRITIQUE }
+enum TypeOrdonnance { SIMPLE; SECURISEE; BIZONE }
+enum StatutAnalyse { EN_ATTENTE; EN_COURS; TERMINE; ANNULE }
+enum TypeExamen { RADIOGRAPHIE; SCANNER; IRM; ECHOGRAPHIE; SCINTIGRAPHIE; PET_SCAN; MAMMOGRAPHIE }
+enum TypeCertificat { MEDICAL; APTITUDE; INAPTITUDE; INVALIDITE; DECES; HOSPITALISATION; REPOS }
+enum TypeDocument { ORDONNANCE; ANALYSE; RADIOLOGIE; CERTIFICAT; AUTRE }
+enum ExpediteurMessage { PATIENT; MEDECIN }
+
+' ===== ENTITIES =====
+class Patient {
+  - id: Long
+  - nom: String
+  - prenom: String
+  - cin: String <<unique>>
+  - dateNaissance: LocalDate
+  - sexe: Sexe
+  - groupeSanguin: GroupeSanguin
+  - telephone: String
+  - email: String
+  - adresse: String
+  - ville: String
+  - mutuelle: String
+  - numeroCNSS: String
+  - createdAt: LocalDateTime
+  - updatedAt: LocalDateTime
+}
+
+class DossierMedical {
+  - id: Long
+  - numeroDossier: String <<unique>>
+  - dateCreation: LocalDateTime
+}
+
+class Consultation {
+  - id: Long
+  - dateConsultation: LocalDateTime
+  - motif: String
+  - diagnostic: String
+  - observations: String
+  - traitement: String
+  - poids: Double
+  - taille: Double
+  - tensionSystolique: Integer
+  - tensionDiastolique: Integer
+  - temperature: Double
+}
+
+class Medecin {
+  - id: Long
+  - nom: String
+  - prenom: String
+  - matricule: String
+  - derniereSynchronisation: LocalDateTime
+  + getNomComplet(): String
+}
+
+class Specialite {
+  - id: Long
+  - nom: String <<unique>>
+  - code: String <<unique>>
+  - description: String
+}
+
+class Service {
+  - id: Long
+  - nom: String
+  - code: String <<unique>>
+  - description: String
+  - localisation: String
+  - capaciteLits: Integer
+}
+
+class Antecedent {
+  - id: Long
+  - typeAntecedent: TypeAntecedent
+  - description: String
+  - dateDiagnostic: LocalDate
+  - severite: NiveauSeverite
+  - actif: boolean
+  - source: String
+}
+
+class Ordonnance {
+  - id: Long
+  - dateOrdonnance: LocalDate
+  - typeOrdonnance: TypeOrdonnance
+  - instructions: String
+  - estRenouvele: boolean
+  - dateExpiration: LocalDate
+}
+
+class LigneOrdonnance {
+  - id: Long
+  - medicament: String
+  - dosage: String
+  - posologie: String
+  - dureeJours: Integer
+  - quantite: Integer
+  - instructions: String
+}
+
+class AnalyseLaboratoire {
+  - id: Long
+  - dateAnalyse: LocalDate
+  - dateResultat: LocalDate
+  - typeAnalyse: String
+  - resultats: String
+  - valeurReference: String
+  - statut: StatutAnalyse
+  - severite: NiveauSeverite
+  - laboratoire: String
+  - prescripteur: String
+  - cheminFichier: String
+}
+
+class Radiologie {
+  - id: Long
+  - dateExamen: LocalDate
+  - typeExamen: TypeExamen
+  - description: String
+  - conclusion: String
+  - prescripteur: String
+  - radiologue: String
+  - cheminFichier: String
+}
+
+class Hospitalisation {
+  - id: Long
+  - dateEntree: LocalDate
+  - dateSortie: LocalDate
+  - motif: String
+  - diagnostic: String
+  - numeroChambre: String
+  - compteRendu: String
+  - actif: boolean
+}
+
+class CertificatMedical {
+  - id: Long
+  - typeCertificat: TypeCertificat
+  - dateEmission: LocalDate
+  - contenu: String
+  - dureeJours: Integer
+}
+
+class DocumentPatient {
+  - id: Long
+  - nomFichierOriginal: String
+  - nomFichierStocke: String
+  - cheminFichier: String
+  - description: String
+  - tailleFichier: Long
+  - contentType: String
+  - typeDocument: TypeDocument
+  - dateUpload: LocalDateTime
+}
+
+class MessagePatient {
+  - id: Long
+  - contenu: String
+  - expediteur: ExpediteurMessage
+  - lu: boolean
+  - medecinId: String
+  - medecinNom: String
+  - dateEnvoi: LocalDateTime
+}
+
+' ===== RELATIONS =====
+Patient "1" *-- "1" DossierMedical : possede >
+Patient --> Sexe
+Patient --> GroupeSanguin
+
+DossierMedical "1" *-- "0..*" Consultation : contient >
+DossierMedical "1" *-- "0..*" Antecedent : contient >
+DossierMedical "1" *-- "0..*" Ordonnance : contient >
+DossierMedical "1" *-- "0..*" AnalyseLaboratoire : contient >
+DossierMedical "1" *-- "0..*" Radiologie : contient >
+DossierMedical "1" *-- "0..*" Hospitalisation : contient >
+DossierMedical "1" *-- "0..*" CertificatMedical : contient >
+DossierMedical "1" *-- "0..*" DocumentPatient : contient >
+DossierMedical "1" *-- "0..*" MessagePatient : contient >
+
+Ordonnance "1" *-- "1..*" LigneOrdonnance : lignes >
+Ordonnance --> Medecin
+Ordonnance --> TypeOrdonnance
+
+Consultation --> Medecin
+Hospitalisation --> Medecin
+Hospitalisation --> Service
+CertificatMedical --> Medecin
+
+Medecin --> Specialite
+Medecin --> Service
+
+Antecedent --> TypeAntecedent
+Antecedent --> NiveauSeverite
+AnalyseLaboratoire --> StatutAnalyse
+AnalyseLaboratoire --> NiveauSeverite
+Radiologie --> TypeExamen
+CertificatMedical --> TypeCertificat
+DocumentPatient --> TypeDocument
+MessagePatient --> ExpediteurMessage
+
+@enduml

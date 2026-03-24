@@ -1,0 +1,201 @@
+@startuml
+title MCD - Microservice ms-patient-personnel
+skinparam linetype ortho
+skinparam entity {
+  BackgroundColor LightYellow
+  BorderColor DarkGoldenRod
+}
+
+entity "PATIENT" as PAT {
+  *id
+  --
+  nom
+  prenom
+  cin <<unique>>
+  date_naissance
+  sexe
+  groupe_sanguin
+  telephone
+  email
+  adresse
+  ville
+  mutuelle
+  numero_cnss
+}
+
+entity "DOSSIER_MEDICAL" as DM {
+  *id
+  --
+  numero_dossier <<unique>>
+  date_creation
+}
+
+entity "CONSULTATION" as CONS {
+  *id
+  --
+  date_consultation
+  motif
+  diagnostic
+  observations
+  traitement
+  poids
+  taille
+  tension_systolique
+  tension_diastolique
+  temperature
+}
+
+entity "MEDECIN" as MED {
+  *id
+  --
+  nom
+  prenom
+  matricule
+  derniere_synchronisation
+}
+
+entity "SPECIALITE" as SPEC {
+  *id
+  --
+  nom <<unique>>
+  code <<unique>>
+  description
+}
+
+entity "SERVICE" as SERV {
+  *id
+  --
+  nom
+  code <<unique>>
+  description
+  localisation
+  capacite_lits
+}
+
+entity "ANTECEDENT" as ANT {
+  *id
+  --
+  type_antecedent
+  description
+  date_diagnostic
+  severite
+  actif
+  source
+}
+
+entity "ORDONNANCE" as ORD {
+  *id
+  --
+  date_ordonnance
+  type_ordonnance
+  instructions
+  est_renouvele
+  date_expiration
+}
+
+entity "LIGNE_ORDONNANCE" as LIGN {
+  *id
+  --
+  medicament
+  dosage
+  posologie
+  duree_jours
+  quantite
+  instructions
+}
+
+entity "ANALYSE_LABORATOIRE" as ANA {
+  *id
+  --
+  date_analyse
+  date_resultat
+  type_analyse
+  resultats
+  valeur_reference
+  statut
+  severite
+  laboratoire
+  prescripteur
+}
+
+entity "RADIOLOGIE" as RAD {
+  *id
+  --
+  date_examen
+  type_examen
+  description
+  conclusion
+  prescripteur
+  radiologue
+}
+
+entity "HOSPITALISATION" as HOSP {
+  *id
+  --
+  date_entree
+  date_sortie
+  motif
+  diagnostic
+  numero_chambre
+  compte_rendu
+  actif
+}
+
+entity "CERTIFICAT_MEDICAL" as CERT {
+  *id
+  --
+  type_certificat
+  date_emission
+  contenu
+  duree_jours
+}
+
+entity "DOCUMENT_PATIENT" as DOC {
+  *id
+  --
+  type_document
+  nom_fichier_original
+  nom_fichier_stocke
+  chemin_fichier
+  description
+  taille_fichier
+  content_type
+  date_upload
+}
+
+entity "MESSAGE_PATIENT" as MSG {
+  *id
+  --
+  contenu
+  expediteur
+  lu
+  medecin_id
+  medecin_nom
+  date_envoi
+}
+
+' ===== RELATIONS =====
+PAT ||--|| DM : "possede\n(1,1)-(1,1)"
+
+DM ||--o{ CONS : "contient\n(1,1)-(0,n)"
+DM ||--o{ ANT  : "comprend\n(1,1)-(0,n)"
+DM ||--o{ ORD  : "inclut\n(1,1)-(0,n)"
+DM ||--o{ ANA  : "enregistre\n(1,1)-(0,n)"
+DM ||--o{ RAD  : "archive\n(1,1)-(0,n)"
+DM ||--o{ HOSP : "trace\n(1,1)-(0,n)"
+DM ||--o{ CERT : "delivre\n(1,1)-(0,n)"
+DM ||--o{ DOC  : "stocke\n(1,1)-(0,n)"
+DM ||--o{ MSG  : "recoit\n(1,1)-(0,n)"
+
+ORD ||--o{ LIGN : "compose\n(1,1)-(1,n)"
+
+MED }o--o{ CONS : "realise\n(0,n)-(0,n)"
+MED }o--o{ ORD  : "prescrit\n(0,n)-(0,n)"
+MED }o--o{ HOSP : "supervise\n(0,n)-(0,n)"
+MED }o--o{ CERT : "etablit\n(0,n)-(0,n)"
+
+MED }o--|| SPEC : "appartient a\n(0,n)-(1,1)"
+MED }o--|| SERV : "travaille dans\n(0,n)-(1,1)"
+HOSP }o--|| SERV : "affecte a\n(0,n)-(1,1)"
+
+@enduml

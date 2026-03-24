@@ -1,0 +1,33 @@
+@startuml
+title Sequence : Creation Compte Personnel (ms-auth)
+
+actor Admin
+participant "AdminController\n/api/v1/admin/personnel" as CTRL
+participant "JwtAuthFilter" as JWT_F
+participant "AuthService" as SVC
+participant "UserAccountRepository" as REPO
+participant "EmailService" as EMAIL
+database "ms_auth_db" as DB
+
+Admin -> CTRL : POST /personnel\nAuthorization: Bearer {token}\n{email, password, nom, role=MEDECIN, personnelId}
+
+CTRL -> JWT_F : Valide JWT
+JWT_F -> JWT_F : extractRole -> ADMIN
+JWT_F -> JWT_F : hasRole(ADMIN) -> OK
+
+CTRL -> SVC : createPersonnelAccount(CreatePersonnelRequest)
+SVC -> REPO : existsByEmail(email)
+REPO --> SVC : false
+
+SVC -> SVC : Encode password (BCrypt)
+SVC -> REPO : save(new UserAccount{\n  role=MEDECIN,\n  personnelId=...\n})
+REPO -> DB : INSERT INTO user_account
+
+SVC -> EMAIL : sendAccountCreatedEmail(\n  to, nom, tempPassword\n)
+EMAIL --> Admin : Email avec identifiants
+
+SVC -> SVC : generateToken(userAccount)
+SVC --> CTRL : AuthResponse
+CTRL --> Admin : 201 Created\n{token, userId, role:"MEDECIN"}
+
+@enduml

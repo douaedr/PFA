@@ -1,0 +1,50 @@
+@startuml
+title Diagramme de Composants - ms-auth
+skinparam componentStyle rectangle
+
+package "ms-auth (:8082)" {
+
+  package "Controller Layer" {
+    [AuthController\n/api/v1/auth] as AC
+    [AdminController\n/api/v1/admin] as ADC
+  }
+
+  package "Security Layer" {
+    [JwtAuthFilter] as JAF
+    [SecurityConfig] as SC
+    [JwtService] as JS
+  }
+
+  package "Service Layer" {
+    [AuthService] as AS
+    [EmailService] as ES
+  }
+
+  package "Data Layer" {
+    [UserAccountRepository] as UAR
+    database "ms_auth_db\n(MySQL :3307)" as DB
+  }
+
+  package "Exception Handling" {
+    [GlobalExceptionHandler] as GEH
+    [AuthException] as AEX
+  }
+}
+
+[Frontend\n:5173] --> AC : REST HTTPS
+[Frontend\n:5173] --> ADC : REST HTTPS (ADMIN only)
+
+SC --> JAF : configure filtre
+JAF --> JS : valide token
+AC --> AS
+ADC --> AS
+AS --> UAR
+AS --> JS
+AS --> ES
+UAR --> DB
+GEH --> AEX
+
+[ms-patient\n:8081] <.. AS : POST /api/v1/patients\n(creer patient)
+[SMTP Server] <.. ES : envoi email
+
+@enduml

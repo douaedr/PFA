@@ -1,0 +1,200 @@
+@startuml
+title Diagramme de Classes - ms-auth
+skinparam classAttributeIconSize 0
+
+' ===== ENUMS =====
+enum Role {
+  PATIENT
+  MEDECIN
+  ADMIN
+  PERSONNEL
+  DIRECTEUR
+}
+
+' ===== ENTITY =====
+class UserAccount {
+  - id: Long
+  - email: String
+  - password: String
+  - role: Role
+  - patientId: Long
+  - personnelId: Long
+  - nom: String
+  - prenom: String
+  - cin: String
+  - enabled: boolean
+  - resetToken: String
+  - resetTokenExpiry: LocalDateTime
+  - createdAt: LocalDateTime
+  - updatedAt: LocalDateTime
+}
+
+' ===== REPOSITORY =====
+interface UserAccountRepository {
+  + findByEmail(email): Optional<UserAccount>
+  + findByCin(cin): Optional<UserAccount>
+  + findByResetToken(token): Optional<UserAccount>
+  + existsByEmail(email): boolean
+  + existsByCin(cin): boolean
+  + findByRole(role): List<UserAccount>
+}
+
+' ===== SECURITY =====
+class JwtService {
+  - secretKey: String
+  - expiration: long
+  + generateToken(user: UserAccount): String
+  + extractEmail(token): String
+  + extractRole(token): String
+  + extractUserId(token): Long
+  + extractClaims(token): Claims
+  + isTokenValid(token): boolean
+}
+
+class JwtAuthFilter {
+  - jwtService: JwtService
+  - userDetailsService: UserDetailsService
+  # doFilterInternal(request, response, chain): void
+}
+
+class SecurityConfig {
+  + securityFilterChain(http): SecurityFilterChain
+  + passwordEncoder(): BCryptPasswordEncoder
+  + authenticationManager(): AuthenticationManager
+  + corsConfigurationSource(): CorsConfigurationSource
+}
+
+' ===== SERVICES =====
+class AuthService {
+  - userRepo: UserAccountRepository
+  - jwtService: JwtService
+  - passwordEncoder: BCryptPasswordEncoder
+  - emailService: EmailService
+  - restTemplate: RestTemplate
+  + login(req: LoginRequest): AuthResponse
+  + registerPatient(req: RegisterPatientRequest): AuthResponse
+  + createPersonnelAccount(req: CreatePersonnelRequest): AuthResponse
+  + forgotPassword(req: ForgotPasswordRequest): void
+  + resetPassword(req: ResetPasswordRequest): void
+  + changePassword(email, req: ChangePasswordRequest): void
+  + verifyToken(token): Map<String, Object>
+  - buildAuthResponse(user: UserAccount): AuthResponse
+  - createPatientInMsPatient(req): Long
+}
+
+class EmailService {
+  - mailSender: JavaMailSender
+  + sendPasswordResetEmail(to, nom, token): void
+  + sendAccountCreatedEmail(to, nom, tempPassword): void
+}
+
+' ===== CONTROLLERS =====
+class AuthController {
+  - authService: AuthService
+  + login(req: LoginRequest): ResponseEntity<AuthResponse>
+  + register(req: RegisterPatientRequest): ResponseEntity<AuthResponse>
+  + forgotPassword(req: ForgotPasswordRequest): ResponseEntity<?>
+  + resetPassword(req: ResetPasswordRequest): ResponseEntity<?>
+  + changePassword(req: ChangePasswordRequest): ResponseEntity<?>
+  + verify(token): ResponseEntity<Map>
+  + me(principal): ResponseEntity<AuthResponse>
+}
+
+class AdminController {
+  - authService: AuthService
+  + createPersonnel(req: CreatePersonnelRequest): ResponseEntity<AuthResponse>
+  + getAllUsers(): ResponseEntity<List<UserAccount>>
+  + getUsersByRole(role): ResponseEntity<List<UserAccount>>
+  + toggleUser(id): ResponseEntity<?>
+  + deleteUser(id): ResponseEntity<?>
+}
+
+' ===== DTOs =====
+class LoginRequest {
+  + email: String
+  + password: String
+}
+
+class AuthResponse {
+  + token: String
+  + type: String
+  + userId: Long
+  + email: String
+  + nom: String
+  + prenom: String
+  + role: String
+  + patientId: Long
+  + personnelId: Long
+}
+
+class RegisterPatientRequest {
+  + nom: String
+  + prenom: String
+  + cin: String
+  + dateNaissance: LocalDate
+  + sexe: String
+  + telephone: String
+  + email: String
+  + adresse: String
+  + ville: String
+  + groupeSanguin: String
+  + mutuelle: String
+  + numeroCNSS: String
+}
+
+class CreatePersonnelRequest {
+  + email: String
+  + password: String
+  + nom: String
+  + prenom: String
+  + cin: String
+  + role: Role
+  + personnelId: Long
+}
+
+class ForgotPasswordRequest {
+  + email: String
+}
+
+class ResetPasswordRequest {
+  + token: String
+  + newPassword: String
+}
+
+class ChangePasswordRequest {
+  + oldPassword: String
+  + newPassword: String
+}
+
+' ===== EXCEPTIONS =====
+class AuthException {
+  + message: String
+}
+
+class GlobalExceptionHandler {
+  + handleAuthException(ex): ResponseEntity<?>
+  + handleValidationException(ex): ResponseEntity<?>
+  + handleRuntimeException(ex): ResponseEntity<?>
+}
+
+' ===== RELATIONS =====
+UserAccount --> Role
+
+UserAccountRepository ..> UserAccount : gere
+
+AuthService --> UserAccountRepository
+AuthService --> JwtService
+AuthService --> EmailService
+
+AuthController --> AuthService
+AdminController --> AuthService
+
+JwtAuthFilter --> JwtService
+SecurityConfig --> JwtAuthFilter
+
+AuthController ..> LoginRequest : recoit
+AuthController ..> RegisterPatientRequest : recoit
+AuthController ..> AuthResponse : retourne
+AdminController ..> CreatePersonnelRequest : recoit
+
+@enduml

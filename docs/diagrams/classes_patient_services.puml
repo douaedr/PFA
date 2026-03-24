@@ -1,0 +1,170 @@
+@startuml
+title Diagramme de Classes - Services et Controllers ms-patient
+skinparam classAttributeIconSize 0
+
+' ===== CONTROLLERS =====
+class PatientController {
+  - patientService: PatientService
+  + createPatient(dto): ResponseEntity<PatientResponseDTO>
+  + getAllPatients(page, size, sort): ResponseEntity<Page<PatientResponseDTO>>
+  + searchPatients(q, page, size): ResponseEntity<Page<PatientResponseDTO>>
+  + getPatientById(id): ResponseEntity<PatientResponseDTO>
+  + getPatientByCin(cin): ResponseEntity<PatientResponseDTO>
+  + updatePatient(id, dto): ResponseEntity<PatientResponseDTO>
+  + deletePatient(id): ResponseEntity<Void>
+  + getStatistiques(): ResponseEntity<Map>
+  + getDossier(id): ResponseEntity<DossierMedicalDTO>
+}
+
+class PatientPortalController {
+  - patientService: PatientService
+  - documentService: DocumentService
+  - messageService: MessageService
+  - pdfService: PdfService
+  - qrCodeService: QrCodeService
+  - rdvProxyService: RdvProxyService
+  + getMyProfile(): ResponseEntity<PatientResponseDTO>
+  + updateMyProfile(req): ResponseEntity<PatientResponseDTO>
+  + getMyDossier(): ResponseEntity<DossierMedicalDTO>
+  + exportDossierPdf(): ResponseEntity<byte[]>
+  + getQrCode(): ResponseEntity<byte[]>
+  + getNotifications(): ResponseEntity<Map>
+  + uploadDocument(file, type, desc): ResponseEntity<DocumentPatientDTO>
+  + listDocuments(): ResponseEntity<List<DocumentPatientDTO>>
+  + downloadDocument(docId): ResponseEntity<Resource>
+  + deleteDocument(docId): ResponseEntity<Void>
+  + getMessages(): ResponseEntity<List<MessagePatientDTO>>
+  + sendMessage(req): ResponseEntity<MessagePatientDTO>
+  + markMessageRead(msgId): ResponseEntity<Void>
+  + getMyRdv(): ResponseEntity<List<RendezVousDTO>>
+  + cancelRdv(rdvId): ResponseEntity<Void>
+}
+
+class DirecteurController {
+  - directeurService: DirecteurService
+  - patientService: PatientService
+  - pdfService: PdfService
+  - rdvProxyService: RdvProxyService
+  + getStats(): ResponseEntity<DirecteurStatsDTO>
+  + getAllPatients(search): ResponseEntity<List<PatientResponseDTO>>
+  + getPatientDossier(id): ResponseEntity<DossierMedicalDTO>
+  + exportPatientPdf(id): ResponseEntity<byte[]>
+  + getMedecins(): ResponseEntity<List<Medecin>>
+  + getRdv(patientId): ResponseEntity<List<RendezVousDTO>>
+}
+
+class AuthController {
+  - jwtService: JwtService
+  - patientRepository: PatientRepository
+  + login(req: LoginRequest): ResponseEntity<LoginResponse>
+  + verify(token): ResponseEntity<Map>
+}
+
+' ===== SERVICES =====
+class PatientService {
+  - patientRepo: PatientRepository
+  - dossierRepo: DossierMedicalRepository
+  - mapper: PatientMapper
+  + createPatient(dto): PatientResponseDTO
+  + getAllPatients(pageable): Page<PatientResponseDTO>
+  + searchPatients(q, pageable): Page<PatientResponseDTO>
+  + getPatientById(id): PatientResponseDTO
+  + getPatientByCin(cin): PatientResponseDTO
+  + updatePatient(id, dto): PatientResponseDTO
+  + deletePatient(id): void
+  + getStatistiques(): Map<String, Long>
+  + getDossierMedical(id): DossierMedicalDTO
+}
+
+class DocumentService {
+  - documentRepo: DocumentPatientRepository
+  - dossierRepo: DossierMedicalRepository
+  - uploadDir: String
+  + uploadDocument(patientId, file, type, desc): DocumentPatientDTO
+  + getDocuments(patientId): List<DocumentPatientDTO>
+  + getDocumentForPatient(docId, patientId): DocumentPatient
+  + loadFileAsResource(filePath): Resource
+  + deleteDocument(docId, patientId): void
+}
+
+class MessageService {
+  - messageRepo: MessagePatientRepository
+  - dossierRepo: DossierMedicalRepository
+  + getMessages(patientId): List<MessagePatientDTO>
+  + envoyerMessage(patientId, req): MessagePatientDTO
+  + marquerLu(patientId, messageId): void
+  + countUnreadFromMedecin(patientId): long
+}
+
+class PdfService {
+  + generateDossierPdf(patientId): byte[]
+}
+
+class QrCodeService {
+  + generatePatientQrCode(patient: Patient): byte[]
+}
+
+class RdvProxyService {
+  - restTemplate: RestTemplate
+  + getRdvPatient(patientId): List<RendezVousDTO>
+  + getAllRdv(): List<RendezVousDTO>
+}
+
+class DirecteurService {
+  - patientRepo: PatientRepository
+  - analyseRepo: AnalyseRepository
+  - documentRepo: DocumentPatientRepository
+  - messageRepo: MessagePatientRepository
+  - medecinRepo: MedecinRepository
+  - dossierRepo: DossierMedicalRepository
+  + getStats(): DirecteurStatsDTO
+}
+
+' ===== SECURITY =====
+class JwtService {
+  + generateToken(patientId, cin): String
+  + extractCin(token): String
+  + extractPatientId(token): Long
+  + extractRole(token): String
+  + isTokenValid(token): boolean
+}
+
+class JwtAuthFilter {
+  # doFilterInternal(req, res, chain): void
+}
+
+' ===== MAPPER =====
+class PatientMapper {
+  + toResponseDTO(patient): PatientResponseDTO
+  + toEntity(dto): Patient
+  + updateEntityFromDTO(dto, patient): void
+  + calcAge(dateNaissance): int
+}
+
+' ===== EXCEPTIONS =====
+class PatientNotFoundException { }
+class PatientAlreadyExistsException { }
+class GlobalExceptionHandler {
+  + handleNotFound(ex): ResponseEntity<?>
+  + handleAlreadyExists(ex): ResponseEntity<?>
+  + handleValidation(ex): ResponseEntity<?>
+}
+
+' ===== RELATIONS =====
+PatientController --> PatientService
+PatientPortalController --> PatientService
+PatientPortalController --> DocumentService
+PatientPortalController --> MessageService
+PatientPortalController --> PdfService
+PatientPortalController --> QrCodeService
+PatientPortalController --> RdvProxyService
+DirecteurController --> DirecteurService
+DirecteurController --> PatientService
+DirecteurController --> PdfService
+DirecteurController --> RdvProxyService
+AuthController --> JwtService
+
+PatientService --> PatientMapper
+JwtAuthFilter --> JwtService
+
+@enduml

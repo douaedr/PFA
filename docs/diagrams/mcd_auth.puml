@@ -1,0 +1,37 @@
+@startuml
+title MCD - Microservice ms-auth
+skinparam linetype ortho
+skinparam entity {
+  BackgroundColor LightYellow
+  BorderColor DarkGoldenRod
+}
+
+entity "USER_ACCOUNT" as UA {
+  *id : BIGINT <<PK>>
+  --
+  email : VARCHAR(255) <<unique>>
+  password : VARCHAR(255)
+  role : ENUM
+  nom : VARCHAR(255)
+  prenom : VARCHAR(255)
+  cin : VARCHAR(50)
+  enabled : BOOLEAN
+  reset_token : VARCHAR(255)
+  reset_token_expiry : DATETIME
+  patient_id : BIGINT
+  personnel_id : BIGINT
+  created_at : DATETIME
+  updated_at : DATETIME
+}
+
+note right of UA
+  role IN {PATIENT, MEDECIN,
+  ADMIN, PERSONNEL, DIRECTEUR}
+
+  patient_id : reference vers
+  ms-patient (inter-microservice)
+
+  personnel_id : reference vers
+  ms-personnel (inter-microservice)
+end note
+@enduml

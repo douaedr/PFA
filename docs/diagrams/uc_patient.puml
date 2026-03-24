@@ -1,0 +1,102 @@
+@startuml
+title Diagramme de Cas d'Utilisation - ms-patient-personnel
+left to right direction
+
+actor "Patient" as P
+actor "Medecin" as M
+actor "Admin" as A
+actor "Directeur" as D
+actor "ms-rdv" as RDV <<systeme>>
+
+rectangle "ms-patient-personnel (:8081)" {
+
+  package "Portail Patient" {
+    usecase "Voir mon profil" as P1
+    usecase "Modifier mon profil" as P2
+    usecase "Consulter mon dossier" as P3
+    usecase "Exporter dossier PDF" as P4
+    usecase "Generer QR Code" as P5
+    usecase "Uploader document" as P6
+    usecase "Lister mes documents" as P7
+    usecase "Telecharger document" as P8
+    usecase "Supprimer document" as P9
+    usecase "Envoyer message" as P10
+    usecase "Voir messages" as P11
+    usecase "Marquer message lu" as P12
+    usecase "Voir mes RDV" as P13
+    usecase "Annuler un RDV" as P14
+    usecase "Voir notifications" as P15
+  }
+
+  package "Gestion Patient (Staff)" {
+    usecase "Creer patient" as S1
+    usecase "Lister patients (pagine)" as S2
+    usecase "Rechercher patient" as S3
+    usecase "Voir detail patient" as S4
+    usecase "Voir dossier patient" as S5
+    usecase "Modifier patient" as S6
+    usecase "Supprimer patient" as S7
+    usecase "Voir statistiques" as S8
+  }
+
+  package "Direction" {
+    usecase "Tableau de bord statistiques" as D1
+    usecase "Voir tous les patients" as D2
+    usecase "Voir dossier + PDF" as D3
+    usecase "Lister medecins" as D4
+    usecase "Voir tous les RDV" as D5
+  }
+
+  package "Auth Interne Patient" {
+    usecase "Login CIN + dateNaissance" as A1
+    usecase "Verifier token" as A2
+  }
+}
+
+P --> A1
+P --> P1
+P --> P2
+P --> P3
+P --> P4
+P --> P5
+P --> P6
+P --> P7
+P --> P8
+P --> P9
+P --> P10
+P --> P11
+P --> P12
+P --> P13
+P --> P14
+P --> P15
+
+M --> S1
+M --> S2
+M --> S3
+M --> S4
+M --> S5
+M --> S6
+
+A --> S1
+A --> S2
+A --> S3
+A --> S4
+A --> S5
+A --> S6
+A --> S7
+A --> S8
+A --> D1
+A --> D2
+A --> D3
+
+D --> D1
+D --> D2
+D --> D3
+D --> D4
+D --> D5
+
+P13 ..> RDV : <<GET /rdv/patient/{id}>>
+P14 ..> RDV : <<PUT /rdv/{id}/annuler>>
+D5 ..> RDV : <<GET /rdv>>
+
+@enduml

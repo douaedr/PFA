@@ -1,0 +1,65 @@
+@startuml
+title Diagramme de Cas d'Utilisation - ms-auth
+left to right direction
+skinparam packageStyle rectangle
+
+actor "Patient" as P
+actor "Admin" as A
+actor "Medecin / Personnel" as M
+actor "Directeur" as D
+actor "ms-patient\n:8081" as SYS <<systeme>>
+
+rectangle "ms-auth (:8082)" {
+
+  package "Authentification Publique" {
+    usecase "Se connecter (JWT)" as UC1
+    usecase "S'inscrire (patient)" as UC2
+    usecase "Demander reinitialisation MDP" as UC3
+    usecase "Reinitialiser mot de passe" as UC4
+  }
+
+  package "Espace Connecte" {
+    usecase "Changer son mot de passe" as UC5
+    usecase "Voir son profil (/me)" as UC6
+    usecase "Verifier token JWT (/verify)" as UC7
+  }
+
+  package "Administration" {
+    usecase "Creer compte personnel/medecin" as UC8
+    usecase "Lister tous les comptes" as UC9
+    usecase "Filtrer comptes par role" as UC10
+    usecase "Activer / Desactiver compte" as UC11
+    usecase "Supprimer un compte" as UC12
+  }
+}
+
+P --> UC1
+P --> UC2
+P --> UC3
+P --> UC4
+P --> UC5
+P --> UC6
+P --> UC7
+
+M --> UC1
+M --> UC5
+M --> UC6
+M --> UC7
+
+D --> UC1
+D --> UC5
+D --> UC6
+
+A --> UC1
+A --> UC5
+A --> UC6
+A --> UC8
+A --> UC9
+A --> UC10
+A --> UC11
+A --> UC12
+
+UC2 ..> SYS : <<cree patient\nPOST /api/v1/patients>>
+UC8 ..> UC1 : <<include>>
+
+@enduml

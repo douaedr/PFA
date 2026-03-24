@@ -1,0 +1,29 @@
+@startuml
+title Sequence : Consultation Dossier Medical (ms-patient)
+
+actor Patient
+participant "PatientPortalController\n/api/v1/patient/me/dossier" as CTRL
+participant "JwtAuthFilter" as JAF
+participant "PatientService" as SVC
+participant "DossierMedicalRepository" as REPO
+database "ms_patient_db" as DB
+
+Patient -> CTRL : GET /me/dossier\nAuthorization: Bearer {token}
+
+CTRL -> JAF : Intercepte requete
+JAF -> JAF : extractPatientId(token) -> 42
+JAF -> JAF : extractRole(token) -> "PATIENT"
+JAF -> JAF : setSecurityContext(PATIENT)
+
+CTRL -> SVC : getDossierMedical(patientId=42)
+SVC -> REPO : findByPatient_Id(42)
+REPO -> DB : SELECT dossier WHERE patient_id=42\n+ JOIN consultations, antecedents,\nordonnances, analyses, radiologies
+DB --> REPO : DossierMedical (entite complete)
+
+SVC -> SVC : Map DossierMedical -> DossierMedicalDTO
+note right: Inclut:\n- ConsultationDTO (avec medecinNomComplet)\n- AntecedentDTO\n- OrdonnanceDTO + LignesOrdonnanceDTO\n- AnalyseDTO\n- RadiologieDTO
+
+SVC --> CTRL : DossierMedicalDTO
+CTRL --> Patient : 200 OK DossierMedicalDTO
+
+@enduml

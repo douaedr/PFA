@@ -1,0 +1,42 @@
+@startuml
+title Sequence : Export PDF Dossier Medical (ms-patient)
+
+actor Patient
+participant "PatientPortalController\n/me/dossier/pdf" as CTRL
+participant "PatientService" as PS
+participant "PdfService" as PDF
+participant "OpenPDF\nLibrary" as OPDF
+database "ms_patient_db" as DB
+
+Patient -> CTRL : GET /me/dossier/pdf\nAuthorization: Bearer {token}
+CTRL -> PS : getPatientById(patientId)
+PS -> DB : SELECT patient WHERE id=?
+DB --> PS : Patient
+
+CTRL -> PDF : generateDossierPdf(patientId)
+PDF -> DB : SELECT dossier complet\n(consultations, antecedents,\nordonnances, analyses, radiologies)
+DB --> PDF : Toutes entites
+
+PDF -> OPDF : new Document()
+PDF -> OPDF : addTitle("Dossier Medical\n{nom} {prenom}")
+PDF -> OPDF : addSection("Informations Patient")
+PDF -> OPDF : addSection("Antecedents")
+
+loop Pour chaque consultation
+  PDF -> OPDF : addRow(date, motif, diagnostic, medecin)
+end
+
+loop Pour chaque ordonnance
+  PDF -> OPDF : addRow(date, medicaments, posologie)
+end
+
+loop Pour chaque analyse
+  PDF -> OPDF : addRow(type, resultat, statut)
+end
+
+PDF -> OPDF : addHeader/Footer
+OPDF --> PDF : byte[]
+PDF --> CTRL : byte[]
+CTRL --> Patient : 200 OK\nContent-Type: application/pdf\nContent-Disposition: attachment;\nfilename=dossier-{cin}.pdf
+
+@enduml

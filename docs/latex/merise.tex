@@ -1,0 +1,196 @@
+\chapter{Modelisation Merise}
+
+\section{Introduction}
+
+La methode Merise permet de modeliser les donnees du systeme a travers trois niveaux
+d'abstraction : conceptuel (MCD), logique (MLD) et physique (MPD). Notre systeme MedSys
+etant base sur une architecture microservices, nous presentons la modelisation pour chaque
+microservice separement.
+
+% ============================================
+\section{Modele Conceptuel de Donnees (MCD)}
+
+\subsection{MCD -- Microservice ms-auth}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.6\textwidth]{figures/mcd_auth}
+  \caption{MCD du microservice ms-auth}
+  \label{fig:mcd_auth}
+\end{figure}
+
+Le microservice d'authentification repose sur une entite centrale
+\texttt{USER\_ACCOUNT} qui centralise les informations de connexion
+et les references vers les entites metier des autres microservices
+(\texttt{patientId} vers ms-patient, \texttt{personnelId} vers ms-personnel).
+
+\subsection{MCD -- Microservice ms-patient-personnel}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/mcd_patient}
+  \caption{MCD du microservice ms-patient-personnel}
+  \label{fig:mcd_patient}
+\end{figure}
+
+Le dossier medical (\texttt{DOSSIER\_MEDICAL}) constitue l'entite centrale du
+microservice patient. Il agrege l'ensemble des informations cliniques a travers
+plusieurs entites specialisees : consultations, antecedents, ordonnances, analyses
+de laboratoire, radiologies, hospitalisations, certificats medicaux, documents
+uploades et messages.
+
+Les cardinalites principales sont :
+\begin{itemize}
+  \item \textbf{PATIENT -- DOSSIER\_MEDICAL} : (1,1) -- (1,1) -- chaque patient possede exactement un dossier medical
+  \item \textbf{DOSSIER\_MEDICAL -- CONSULTATION} : (1,1) -- (0,n) -- un dossier peut contenir zero ou plusieurs consultations
+  \item \textbf{ORDONNANCE -- LIGNE\_ORDONNANCE} : (1,1) -- (1,n) -- une ordonnance contient au moins une ligne
+  \item \textbf{MEDECIN -- SPECIALITE} : (0,n) -- (1,1) -- un medecin appartient a une specialite
+\end{itemize}
+
+% ============================================
+\section{Modele Logique de Donnees (MLD)}
+
+Le MLD traduit le MCD en tables relationnelles en introduisant les cles primaires,
+cles etrangeres et contraintes d'integrite.
+
+\subsection{MLD -- ms-auth}
+
+\begin{verbatim}
+USER_ACCOUNT (#id, email*, password, role, nom, prenom, cin,
+              enabled, reset_token, reset_token_expiry,
+              patient_id, personnel_id, created_at, updated_at)
+\end{verbatim}
+
+\subsection{MLD -- ms-patient-personnel}
+
+\begin{verbatim}
+SPECIALITE      (#id, nom*, code*)
+SERVICE         (#id, nom, code*, description, localisation, capacite_lits)
+
+MEDECIN         (#id, nom, prenom, matricule,
+                 #specialite_id => SPECIALITE,
+                 #service_id => SERVICE,
+                 derniere_synchronisation)
+
+PATIENT         (#id, nom, prenom, cin*, date_naissance, sexe,
+                 groupe_sanguin, telephone, email, adresse, ville,
+                 mutuelle, numero_cnss,
+                 #dossier_medical_id => DOSSIER_MEDICAL,
+                 created_at, updated_at)
+
+DOSSIER_MEDICAL (#id, numero_dossier*, date_creation)
+
+CONSULTATION    (#id, #dossier_id => DOSSIER_MEDICAL,
+                 #medecin_id => MEDECIN,
+                 date_consultation, motif, diagnostic,
+                 observations, traitement, poids, taille,
+                 tension_systolique, tension_diastolique, temperature)
+
+ANTECEDENT      (#id, #dossier_id => DOSSIER_MEDICAL,
+                 type_antecedent, description, date_diagnostic,
+                 severite, actif, source)
+
+ORDONNANCE      (#id, #dossier_id => DOSSIER_MEDICAL,
+                 #medecin_id => MEDECIN,
+                 date_ordonnance, type_ordonnance, instructions,
+                 est_renouvele, date_expiration)
+
+LIGNE_ORDONNANCE(#id, #ordonnance_id => ORDONNANCE,
+                 medicament, dosage, posologie,
+                 duree_jours, quantite, instructions)
+
+ANALYSE_LABORATOIRE(#id, #dossier_id => DOSSIER_MEDICAL,
+                    date_analyse, date_resultat, type_analyse,
+                    resultats, valeur_reference, statut, severite,
+                    laboratoire, prescripteur, chemin_fichier)
+
+RADIOLOGIE      (#id, #dossier_id => DOSSIER_MEDICAL,
+                 date_examen, type_examen, description,
+                 conclusion, prescripteur, radiologue)
+
+HOSPITALISATION (#id, #dossier_id => DOSSIER_MEDICAL,
+                 #service_id => SERVICE,
+                 #medecin_responsable_id => MEDECIN,
+                 date_entree, date_sortie, motif, diagnostic,
+                 numero_chambre, compte_rendu, actif)
+
+CERTIFICAT_MEDICAL(#id, #dossier_id => DOSSIER_MEDICAL,
+                   #medecin_id => MEDECIN,
+                   type_certificat, date_emission,
+                   contenu, duree_jours)
+
+DOCUMENT_PATIENT(#id, #dossier_id => DOSSIER_MEDICAL,
+                 type_document, nom_fichier_original,
+                 nom_fichier_stocke, chemin_fichier,
+                 description, taille_fichier, content_type,
+                 date_upload)
+
+MESSAGE_PATIENT (#id, #dossier_id => DOSSIER_MEDICAL,
+                 contenu, expediteur, lu,
+                 medecin_id, medecin_nom, date_envoi)
+\end{verbatim}
+
+\textbf{Conventions :} \texttt{\#} = cle primaire, \texttt{*} = contrainte d'unicite, \texttt{=>} = cle etrangere.
+
+% ============================================
+\section{Modele Physique de Donnees (MPD)}
+
+Le MPD correspond aux scripts SQL de creation des tables. Le script complet est
+disponible dans le fichier \texttt{docs/sql/mpd.sql}.
+
+\subsection{Tables principales -- ms\_auth\_db}
+
+\begin{lstlisting}[caption=Table user\_accounts]
+CREATE TABLE user_accounts (
+    id        BIGINT AUTO_INCREMENT PRIMARY KEY,
+    email     VARCHAR(255) NOT NULL UNIQUE,
+    password  VARCHAR(255) NOT NULL,
+    role      ENUM('PATIENT','MEDECIN','ADMIN',
+                   'PERSONNEL','DIRECTEUR') NOT NULL,
+    nom       VARCHAR(255) NOT NULL,
+    prenom    VARCHAR(255) NOT NULL,
+    cin       VARCHAR(50),
+    enabled   BOOLEAN DEFAULT TRUE,
+    ...
+);
+\end{lstlisting}
+
+\subsection{Tables principales -- ms\_patient\_db}
+
+\begin{lstlisting}[caption=Table patients]
+CREATE TABLE patients (
+    id                 BIGINT AUTO_INCREMENT PRIMARY KEY,
+    cin                VARCHAR(50) NOT NULL UNIQUE,
+    nom                VARCHAR(255) NOT NULL,
+    prenom             VARCHAR(255) NOT NULL,
+    date_naissance     DATE NOT NULL,
+    dossier_medical_id BIGINT UNIQUE,
+    FOREIGN KEY (dossier_medical_id)
+        REFERENCES dossiers_medicaux(id)
+);
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Table dossiers\_medicaux]
+CREATE TABLE dossiers_medicaux (
+    id              BIGINT AUTO_INCREMENT PRIMARY KEY,
+    numero_dossier  VARCHAR(50) NOT NULL UNIQUE,
+    date_creation   DATETIME DEFAULT CURRENT_TIMESTAMP
+);
+\end{lstlisting}
+
+\begin{lstlisting}[caption=Table consultations]
+CREATE TABLE consultations (
+    id                  BIGINT AUTO_INCREMENT PRIMARY KEY,
+    dossier_id          BIGINT NOT NULL,
+    medecin_id          BIGINT,
+    date_consultation   DATETIME NOT NULL,
+    motif               VARCHAR(500),
+    diagnostic          TEXT,
+    FOREIGN KEY (dossier_id)
+        REFERENCES dossiers_medicaux(id),
+    FOREIGN KEY (medecin_id)
+        REFERENCES medecins_ref(id)
+);
+\end{lstlisting}
+
+\textit{Le script SQL complet avec toutes les tables est disponible dans \texttt{docs/sql/mpd.sql}.}

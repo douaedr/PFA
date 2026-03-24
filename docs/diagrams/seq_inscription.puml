@@ -1,0 +1,45 @@
+@startuml
+title Sequence : Inscription Patient (ms-auth)
+
+actor Patient
+participant "AuthController\n/api/v1/auth/register" as CTRL
+participant "AuthService" as SVC
+participant "UserAccountRepository" as REPO
+participant "RestTemplate" as REST
+participant "ms-patient\n:8081/api/v1/patients" as PATIENT_SVC
+participant "JwtService" as JWT
+database "ms_auth_db" as DB
+
+Patient -> CTRL : POST /register\n{nom, prenom, cin, email,\ndateNaissance, ...}
+CTRL -> SVC : registerPatient(RegisterPatientRequest)
+
+SVC -> REPO : existsByEmail(email)
+REPO -> DB : SELECT COUNT(*) WHERE email=?
+DB --> REPO : 0
+REPO --> SVC : false
+
+SVC -> REPO : existsByCin(cin)
+REPO --> SVC : false
+
+alt email ou CIN deja existant
+  SVC --> CTRL : throw AuthException("Deja existant")
+  CTRL --> Patient : 400 Bad Request
+end
+
+SVC -> REST : POST ms-patient:8081/api/v1/patients\n{PatientRequestDTO}
+REST -> PATIENT_SVC : Cree Patient + DossierMedical
+PATIENT_SVC --> REST : {id: 42}
+REST --> SVC : patientId = 42
+
+SVC -> SVC : Encode password (BCrypt)
+SVC -> REPO : save(new UserAccount{\n  email, password, role=PATIENT,\n  patientId=42, nom, prenom, cin\n})
+REPO -> DB : INSERT INTO user_account
+DB --> REPO : UserAccount sauvegarde
+
+SVC -> JWT : generateToken(userAccount)
+JWT --> SVC : token JWT
+
+SVC --> CTRL : AuthResponse
+CTRL --> Patient : 201 Created\n{token, userId, role:"PATIENT", patientId:42}
+
+@enduml

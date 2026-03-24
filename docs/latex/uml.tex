@@ -1,0 +1,233 @@
+\chapter{Modelisation UML}
+
+\section{Introduction}
+
+La modelisation UML de MedSys couvre les aspects fonctionnels (cas d'utilisation),
+structurels (diagrammes de classes) et comportementaux (diagrammes de sequence)
+pour chacun des deux microservices principaux.
+
+% ============================================
+\section{Diagrammes de Cas d'Utilisation}
+
+\subsection{ms-auth -- Cas d'utilisation}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.9\textwidth]{figures/uc_auth}
+  \caption{Diagramme de cas d'utilisation -- ms-auth}
+  \label{fig:uc_auth}
+\end{figure}
+
+Le microservice ms-auth expose trois categories de fonctionnalites :
+\begin{itemize}
+  \item \textbf{Authentification publique} : inscription patient, connexion, reinitialisation de mot de passe
+  \item \textbf{Espace connecte} : changement de mot de passe, consultation de profil, verification de token
+  \item \textbf{Administration} : creation de comptes personnel/medecin, gestion des comptes (activation, suppression)
+\end{itemize}
+
+\subsection{ms-patient-personnel -- Cas d'utilisation}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/uc_patient}
+  \caption{Diagramme de cas d'utilisation -- ms-patient-personnel}
+  \label{fig:uc_patient}
+\end{figure}
+
+Les fonctionnalites sont reparties en quatre domaines :
+\begin{itemize}
+  \item \textbf{Portail patient} : consultation du dossier, upload de documents, messagerie, rendez-vous, export PDF, QR code
+  \item \textbf{Gestion patient (staff)} : CRUD patients, consultation des dossiers, statistiques
+  \item \textbf{Direction} : tableau de bord statistiques, vue globale patients/medecins/RDV
+  \item \textbf{Authentification interne} : login patient par CIN + date de naissance
+\end{itemize}
+
+% ============================================
+\section{Diagrammes de Classes}
+
+\subsection{ms-auth -- Classes completes}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/classes_auth}
+  \caption{Diagramme de classes -- ms-auth}
+  \label{fig:classes_auth}
+\end{figure}
+
+L'architecture du microservice ms-auth suit le pattern classique Spring Boot :
+\texttt{Controller} $\rightarrow$ \texttt{Service} $\rightarrow$ \texttt{Repository}.
+La couche securite est assuree par \texttt{JwtService} et \texttt{JwtAuthFilter}
+qui interceptent chaque requete pour valider le token JWT.
+
+\subsection{ms-patient -- Entites JPA}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/classes_patient_entites}
+  \caption{Diagramme de classes -- entites JPA ms-patient}
+  \label{fig:classes_entites}
+\end{figure}
+
+L'entite \texttt{Patient} est liee en \texttt{@OneToOne} a \texttt{DossierMedical},
+qui centralise en \texttt{@OneToMany} toutes les sous-entites cliniques. L'entite
+\texttt{Medecin} est une reference synchronisee depuis le microservice ms-personnel.
+
+\subsection{ms-patient -- Services et Controllers}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/classes_patient_services}
+  \caption{Diagramme de classes -- couche service/controller ms-patient}
+  \label{fig:classes_services}
+\end{figure}
+
+Les services specialises (\texttt{DocumentService}, \texttt{MessageService},
+\texttt{PdfService}, \texttt{QrCodeService}) sont injectes dans le
+\texttt{PatientPortalController} qui orchestre l'ensemble des fonctionnalites
+du portail patient.
+
+% ============================================
+\section{Diagrammes de Sequence}
+
+\subsection{ms-auth : Authentification Login}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/seq_login}
+  \caption{Sequence : authentification par email/mot de passe}
+  \label{fig:seq_login}
+\end{figure}
+
+Le flux de login valide successivement : l'existence du compte, le mot de passe
+(BCrypt), l'activation du compte, puis genere un token JWT signe HMAC-SHA256
+contenant les claims \texttt{userId}, \texttt{role}, \texttt{patientId} et
+\texttt{personnelId}.
+
+\subsection{ms-auth : Inscription Patient}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/seq_inscription}
+  \caption{Sequence : inscription d'un nouveau patient}
+  \label{fig:seq_inscription}
+\end{figure}
+
+L'inscription implique une communication inter-microservices :
+ms-auth appelle ms-patient via REST pour creer l'entite \texttt{Patient}
+et le \texttt{DossierMedical} associe, puis cree le \texttt{UserAccount} localement.
+
+\subsection{ms-auth : Reinitialisation Mot de Passe}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/seq_reset_mdp}
+  \caption{Sequence : reinitialisation du mot de passe (2 etapes)}
+  \label{fig:seq_reset}
+\end{figure}
+
+Le processus se deroule en deux phases :
+\begin{enumerate}
+  \item Generation d'un token UUID et envoi par email SMTP
+  \item Validation du token, verification de l'expiration (1h), et mise a jour du mot de passe
+\end{enumerate}
+
+\subsection{ms-auth : Creation Compte Personnel}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/seq_creation_personnel}
+  \caption{Sequence : creation d'un compte personnel/medecin par l'admin}
+  \label{fig:seq_creation_personnel}
+\end{figure}
+
+Seul un utilisateur avec le role \texttt{ADMIN} peut creer des comptes
+pour le personnel medical. Un email est envoye avec les identifiants temporaires.
+
+\subsection{ms-patient : Login Patient par CIN}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.8\textwidth]{figures/seq_login_cin}
+  \caption{Sequence : authentification patient par CIN + date de naissance}
+  \label{fig:seq_login_cin}
+\end{figure}
+
+Ce mecanisme d'authentification simplifie ne requiert pas de mot de passe :
+le patient s'identifie avec son CIN et sa date de naissance.
+
+\subsection{ms-patient : Consultation du Dossier Medical}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/seq_dossier}
+  \caption{Sequence : consultation du dossier medical par le patient}
+  \label{fig:seq_dossier}
+\end{figure}
+
+Le \texttt{JwtAuthFilter} extrait le \texttt{patientId} du token pour garantir
+que le patient n'accede qu'a son propre dossier. Le dossier est charge avec
+toutes ses relations (consultations, antecedents, ordonnances, analyses, radiologies).
+
+\subsection{ms-patient : Upload de Document}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/seq_upload}
+  \caption{Sequence : upload d'un document medical}
+  \label{fig:seq_upload}
+\end{figure}
+
+Le \texttt{DocumentService} assure la securite des uploads : validation du type
+MIME (PDF/images uniquement), limite de taille (5 MB), protection contre le
+path traversal, et stockage avec un nom UUID unique.
+
+\subsection{ms-patient : Export PDF du Dossier}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/seq_pdf}
+  \caption{Sequence : export du dossier medical en PDF}
+  \label{fig:seq_pdf}
+\end{figure}
+
+Le \texttt{PdfService} utilise la librairie OpenPDF pour generer un document
+structure avec en-tete, informations patient, et toutes les sections du dossier.
+
+\subsection{ms-patient : Statistiques Directeur}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/seq_stats}
+  \caption{Sequence : generation des statistiques pour le directeur}
+  \label{fig:seq_stats}
+\end{figure}
+
+Le \texttt{DirecteurService} agrege les donnees de multiples repositories
+pour construire un \texttt{DirecteurStatsDTO} complet : comptages patients,
+medecins, analyses par statut, distributions par ville et groupe sanguin.
+
+% ============================================
+\section{Diagrammes de Composants}
+
+\subsection{ms-auth}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=0.85\textwidth]{figures/composants_auth}
+  \caption{Diagramme de composants -- ms-auth}
+  \label{fig:comp_auth}
+\end{figure}
+
+\subsection{ms-patient-personnel}
+
+\begin{figure}[H]
+  \centering
+  \includegraphics[width=\textwidth]{figures/composants_patient}
+  \caption{Diagramme de composants -- ms-patient-personnel}
+  \label{fig:comp_patient}
+\end{figure}
+
+L'architecture en composants met en evidence les dependances entre couches
+et les communications inter-microservices : ms-auth appelle ms-patient pour
+la creation de patients, et ms-patient appelle ms-rdv pour la gestion des
+rendez-vous via un proxy REST.

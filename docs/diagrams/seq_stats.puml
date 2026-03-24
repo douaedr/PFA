@@ -1,0 +1,37 @@
+@startuml
+title Sequence : Statistiques Directeur (ms-patient)
+
+actor Directeur
+participant "DirecteurController\n/api/v1/directeur/stats" as CTRL
+participant "DirecteurService" as SVC
+participant "PatientRepository" as PREPO
+participant "AnalyseRepository" as AREPO
+participant "MedecinRepository" as MREPO
+participant "DocumentPatientRepository" as DREPO
+database "ms_patient_db" as DB
+
+Directeur -> CTRL : GET /stats\nAuthorization: Bearer {token}
+CTRL -> SVC : getStats()
+
+SVC -> PREPO : count() -> totalPatients
+PREPO -> DB : SELECT COUNT(*) FROM patient
+SVC -> PREPO : countPatientsCreatedAfter(debut_mois)
+SVC -> PREPO : countBySexe(MASCULIN/FEMININ)
+SVC -> PREPO : countByVille() -> List[ville, count]
+SVC -> PREPO : countByGroupeSanguin() -> List[groupe, count]
+SVC -> PREPO : countByMonth(6 derniers mois)
+
+SVC -> MREPO : count() -> totalMedecins
+SVC -> AREPO : count() -> totalAnalyses
+SVC -> AREPO : countByStatut(EN_ATTENTE)
+SVC -> AREPO : countByStatut(EN_COURS)
+SVC -> AREPO : countByStatut(TERMINE)
+
+SVC -> DREPO : count() -> totalDocuments
+DB --> SVC : Toutes donnees agregees
+
+SVC -> SVC : Construit DirecteurStatsDTO
+SVC --> CTRL : DirecteurStatsDTO
+CTRL --> Directeur : 200 OK DirecteurStatsDTO\n{totalPatients, nouveauxCeMois,\npatientsParVille, analysesParStatut, ...}
+
+@enduml

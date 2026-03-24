@@ -1,0 +1,80 @@
+\documentclass[12pt,a4paper]{report}
+
+% ===== PACKAGES =====
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage[french]{babel}
+\usepackage{graphicx}
+\usepackage{float}
+\usepackage{geometry}
+\usepackage{hyperref}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{booktabs}
+\usepackage{listings}
+\usepackage{xcolor}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{longtable}
+
+% ===== MISE EN PAGE =====
+\geometry{
+  top=2.5cm, bottom=2.5cm,
+  left=3cm, right=2.5cm
+}
+
+% ===== STYLE CODE SQL =====
+\lstset{
+  language=SQL,
+  basicstyle=\ttfamily\small,
+  keywordstyle=\color{blue}\bfseries,
+  commentstyle=\color{gray},
+  stringstyle=\color{red},
+  frame=single,
+  breaklines=true,
+  numbers=left,
+  numberstyle=\tiny\color{gray},
+  tabsize=2,
+  showstringspaces=false
+}
+
+% ===== EN-TETE / PIED =====
+\pagestyle{fancy}
+\fancyhf{}
+\fancyhead[L]{\leftmark}
+\fancyhead[R]{MedSys}
+\fancyfoot[C]{\thepage}
+
+% ===== HYPERLINKS =====
+\hypersetup{
+  colorlinks=true,
+  linkcolor=blue,
+  urlcolor=blue,
+  citecolor=blue
+}
+
+\begin{document}
+
+% ===== PAGE DE GARDE =====
+\begin{titlepage}
+  \centering
+  \vspace*{2cm}
+  {\Huge\bfseries MedSys\par}
+  \vspace{0.5cm}
+  {\Large Systeme de Gestion des Dossiers Medicaux Hospitaliers\par}
+  \vspace{2cm}
+  {\large Rapport de Conception\par}
+  \vspace{1cm}
+  {\large Modelisation Merise et UML\par}
+  \vfill
+  {\large \today\par}
+\end{titlepage}
+
+\tableofcontents
+\newpage
+
+% ===== CHAPITRES =====
+\input{merise}
+\input{uml}
+
+\end{document}

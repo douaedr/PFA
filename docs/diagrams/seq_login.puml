@@ -1,0 +1,46 @@
+@startuml
+title Sequence : Authentification Login (ms-auth)
+
+actor Utilisateur
+participant "AuthController\n/api/v1/auth/login" as CTRL
+participant "AuthService" as SVC
+participant "UserAccountRepository" as REPO
+participant "BCryptPasswordEncoder" as BCR
+participant "JwtService" as JWT
+database "ms_auth_db" as DB
+
+Utilisateur -> CTRL : POST /login\n{email, password}
+CTRL -> SVC : login(LoginRequest)
+SVC -> REPO : findByEmail(email)
+REPO -> DB : SELECT * FROM user_account\nWHERE email = ?
+DB --> REPO : UserAccount (ou vide)
+REPO --> SVC : Optional<UserAccount>
+
+alt compte non trouve
+  SVC --> CTRL : throw AuthException("Email introuvable")
+  CTRL --> Utilisateur : 401 Unauthorized
+end
+
+SVC -> BCR : matches(rawPassword, hashedPassword)
+BCR --> SVC : true / false
+
+alt mot de passe incorrect
+  SVC --> CTRL : throw AuthException("Mot de passe incorrect")
+  CTRL --> Utilisateur : 401 Unauthorized
+end
+
+alt compte desactive
+  SVC --> CTRL : throw AuthException("Compte desactive")
+  CTRL --> Utilisateur : 401 Unauthorized
+end
+
+SVC -> JWT : generateToken(userAccount)
+JWT -> JWT : Build claims:\n{userId, role, nom, prenom,\npatientId, personnelId}
+JWT -> JWT : Sign HMAC-SHA256
+JWT --> SVC : "eyJhbGci..."
+
+SVC -> SVC : buildAuthResponse(userAccount)
+SVC --> CTRL : AuthResponse
+CTRL --> Utilisateur : 200 OK\n{token, type:"Bearer",\nuserId, email, role, patientId}
+
+@enduml

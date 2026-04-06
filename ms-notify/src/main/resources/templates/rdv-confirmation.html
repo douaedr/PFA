@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org" lang="fr">
+<head>
+    <meta charset="UTF-8"/>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+    <title>Confirmation de rendez-vous — MedSys</title>
+</head>
+<body style="margin:0;padding:0;background-color:#f4f6f9;font-family:'Segoe UI',Arial,sans-serif;color:#333333;">
+
+<!-- Outer wrapper -->
+<table width="100%" cellpadding="0" cellspacing="0" border="0"
+       style="background-color:#f4f6f9;padding:32px 0;">
+    <tr>
+        <td align="center">
+
+            <!-- Card -->
+            <table width="600" cellpadding="0" cellspacing="0" border="0"
+                   style="max-width:600px;width:100%;background-color:#ffffff;
+                          border-radius:8px;overflow:hidden;
+                          box-shadow:0 2px 8px rgba(0,0,0,0.08);">
+
+                <!-- ── Header ──────────────────────────────────────────── -->
+                <tr>
+                    <td style="background-color:#1a6b3a;padding:28px 40px;text-align:center;">
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0">
+                            <tr>
+                                <td>
+                                    <!-- Logo / wordmark -->
+                                    <span style="font-size:28px;font-weight:700;
+                                                 color:#ffffff;letter-spacing:2px;">
+                                        &#9883;&nbsp;MedSys
+                                    </span>
+                                    <p style="margin:6px 0 0;font-size:13px;
+                                               color:#a8d5b5;letter-spacing:1px;">
+                                        SYSTÈME HOSPITALIER
+                                    </p>
+                                </td>
+                            </tr>
+                        </table>
+                    </td>
+                </tr>
+
+                <!-- ── Confirmation banner ─────────────────────────────── -->
+                <tr>
+                    <td style="background-color:#27ae60;padding:20px 40px;text-align:center;">
+                        <p style="margin:0;font-size:20px;font-weight:700;color:#ffffff;">
+                            ✔&nbsp;&nbsp;Rendez-vous confirmé
+                        </p>
+                    </td>
+                </tr>
+
+                <!-- ── Body ───────────────────────────────────────────── -->
+                <tr>
+                    <td style="padding:36px 40px;">
+
+                        <p style="margin:0 0 16px;font-size:16px;line-height:1.6;">
+                            Bonjour,
+                        </p>
+                        <p style="margin:0 0 24px;font-size:16px;line-height:1.6;">
+                            Votre rendez-vous a été enregistré avec succès.
+                            Voici les détails de votre consultation :
+                        </p>
+
+                        <!-- Details box -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="background-color:#f0faf4;border-left:4px solid #27ae60;
+                                      border-radius:4px;margin-bottom:28px;">
+                            <tr>
+                                <td style="padding:20px 24px;">
+                                    <table width="100%" cellpadding="0" cellspacing="8" border="0">
+                                        <tr>
+                                            <td style="width:140px;font-size:14px;
+                                                       color:#666;font-weight:600;">
+                                                Médecin
+                                            </td>
+                                            <td style="font-size:15px;font-weight:700;color:#1a6b3a;"
+                                                th:text="${medecinNom}">Dr. Exemple</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top:8px;font-size:14px;
+                                                       color:#666;font-weight:600;">
+                                                Date
+                                            </td>
+                                            <td style="padding-top:8px;font-size:15px;
+                                                       font-weight:600;color:#333;"
+                                                th:text="${date}">lundi 10 avril 2026</td>
+                                        </tr>
+                                        <tr>
+                                            <td style="padding-top:8px;font-size:14px;
+                                                       color:#666;font-weight:600;">
+                                                Heure
+                                            </td>
+                                            <td style="padding-top:8px;font-size:22px;
+                                                       font-weight:700;color:#1a6b3a;"
+                                                th:text="${heure}">09:30</td>
+                                        </tr>
+                                    </table>
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- Instructions -->
+                        <p style="margin:0 0 10px;font-size:15px;font-weight:700;color:#333;">
+                            Informations importantes
+                        </p>
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="margin-bottom:28px;">
+                            <tr>
+                                <td style="padding:6px 0;font-size:14px;color:#555;line-height:1.7;">
+                                    &#8226;&nbsp; Présentez-vous <strong>10 minutes avant</strong>
+                                    votre heure de rendez-vous.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 0;font-size:14px;color:#555;line-height:1.7;">
+                                    &#8226;&nbsp; Munissez-vous de votre <strong>carte d'identité</strong>
+                                    et de votre <strong>carte d'assurance maladie</strong>.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 0;font-size:14px;color:#555;line-height:1.7;">
+                                    &#8226;&nbsp; En cas d'empêchement, annulez votre rendez-vous
+                                    au moins <strong>24 heures à l'avance</strong>.
+                                </td>
+                            </tr>
+                            <tr>
+                                <td style="padding:6px 0;font-size:14px;color:#555;line-height:1.7;">
+                                    &#8226;&nbsp; Apportez les résultats de vos examens précédents
+                                    si vous en avez.
+                                </td>
+                            </tr>
+                        </table>
+
+                        <!-- CTA buttons -->
+                        <table width="100%" cellpadding="0" cellspacing="0" border="0"
+                               style="margin-bottom:8px;">
+                            <tr>
+                                <td align="center" style="padding:8px;">
+                                    <a href="http://localhost:5173/patient/rendez-vous"
+                                       style="display:inline-block;padding:12px 28px;
+                                              background-color:#1a6b3a;color:#ffffff;
+                                              text-decoration:none;border-radius:5px;
+                                              font-size:15px;font-weight:600;">
+                                        Voir mes rendez-vous
+                                    </a>
+                                </td>
+                                <td align="center" style="padding:8px;">
+                                    <a href="http://localhost:5173/patient/rendez-vous"
+                                       style="display:inline-block;padding:12px 28px;
+                                              background-color:#ffffff;color:#c0392b;
+                                              text-decoration:none;border-radius:5px;
+                                              font-size:15px;font-weight:600;
+                                              border:1px solid #c0392b;">
+                                        Annuler / Modifier
+                                    </a>
+                                </td>
+                            </tr>
+                        </table>
+
+                    </td>
+                </tr>
+
+                <!-- ── Footer ──────────────────────────────────────────── -->
+                <tr>
+                    <td style="background-color:#f4f6f9;padding:24px 40px;
+                               border-top:1px solid #e0e0e0;text-align:center;">
+                        <p style="margin:0 0 6px;font-size:13px;color:#888;">
+                            <strong style="color:#555;">MedSys — Hôpital Universitaire</strong>
+                        </p>
+                        <p style="margin:0 0 6px;font-size:12px;color:#aaa;">
+                            123 Avenue de la Santé, Casablanca, Maroc
+                        </p>
+                        <p style="margin:0 0 6px;font-size:12px;color:#aaa;">
+                            Tél : +212 5 22 00 00 00 &nbsp;|&nbsp;
+                            Email : contact@medsys-hopital.ma
+                        </p>
+                        <p style="margin:16px 0 0;font-size:11px;color:#bbb;">
+                            Ce message est généré automatiquement. Merci de ne pas y répondre
+                            directement.
+                        </p>
+                    </td>
+                </tr>
+
+            </table>
+            <!-- end card -->
+
+        </td>
+    </tr>
+</table>
+
+</body>
+</html>

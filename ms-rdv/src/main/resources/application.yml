@@ -1,0 +1,37 @@
+server:
+  port: 8083
+
+spring:
+  application:
+    name: ms-rdv
+  datasource:
+    url: jdbc:mysql://localhost:3307/ms_rdv_db?createDatabaseIfNotExist=true&useSSL=false&serverTimezone=Africa/Casablanca
+    username: root
+    password: ""
+    driver-class-name: com.mysql.cj.jdbc.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: false
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQLDialect
+  rabbitmq:
+    host: localhost
+    port: 5672
+    username: guest
+    password: guest
+
+jwt:
+  secret: medsys-hospital-jwt-secret-key-2026-very-long-and-secure-production-key-minimum-256-bits
+  expiration: 900000
+
+app:
+  ms-patient-url: http://localhost:8081
+  ms-auth-url: http://localhost:8082
+
+springdoc:
+  api-docs:
+    path: /api-docs
+  swagger-ui:
+    path: /swagger-ui.html

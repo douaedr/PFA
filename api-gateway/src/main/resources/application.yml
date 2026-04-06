@@ -1,0 +1,89 @@
+server:
+  port: 8080
+
+spring:
+  application:
+    name: api-gateway
+  cloud:
+    gateway:
+      globalcors:
+        cors-configurations:
+          '[/**]':
+            allowedOrigins:
+              - "http://localhost:5173"
+              - "http://localhost:3000"
+            allowedMethods:
+              - GET
+              - POST
+              - PUT
+              - DELETE
+              - PATCH
+              - OPTIONS
+            allowedHeaders:
+              - "*"
+            allowCredentials: true
+            maxAge: 3600
+      routes:
+        # Auth service - public endpoints (no JWT required)
+        - id: auth-service-public
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/auth/**
+          filters:
+            - name: LoggingFilter
+
+        # Auth service - admin endpoints (JWT required)
+        - id: auth-service-admin
+          uri: http://localhost:8082
+          predicates:
+            - Path=/api/v1/admin/**
+          filters:
+            - name: JwtAuthFilter
+            - name: LoggingFilter
+
+        # Patient/Personnel service
+        - id: patient-service
+          uri: http://localhost:8081
+          predicates:
+            - Path=/api/v1/patients/**, /api/v1/patient/**, /api/v1/directeur/**, /api/v1/doctors/**
+          filters:
+            - name: JwtAuthFilter
+            - name: LoggingFilter
+
+        # Appointment (RDV) service
+        - id: rdv-service
+          uri: http://localhost:8083
+          predicates:
+            - Path=/api/v1/rdv/**
+          filters:
+            - name: JwtAuthFilter
+            - name: LoggingFilter
+
+        # Personnel service (.NET)
+        - id: personnel-service
+          uri: http://localhost:5130
+          predicates:
+            - Path=/api/personnel/**
+          filters:
+            - name: JwtAuthFilter
+            - name: LoggingFilter
+
+        # Notification service
+        - id: notify-service
+          uri: http://localhost:8084
+          predicates:
+            - Path=/api/v1/notifications/**, /ws/**
+          filters:
+            - name: LoggingFilter
+
+jwt:
+  secret: medsys-hospital-jwt-secret-key-2026-very-long-and-secure-production-key-minimum-256-bits
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info,routes,filters
+  endpoint:
+    health:
+      show-details: always

@@ -4,6 +4,7 @@ import com.lowagie.text.*;
 import com.lowagie.text.Font;
 import com.lowagie.text.Rectangle;
 import com.lowagie.text.pdf.*;
+import com.lowagie.text.pdf.draw.LineSeparator;
 import com.hospital.patient.entity.*;
 import com.hospital.patient.exception.PatientNotFoundException;
 import com.hospital.patient.repository.PatientRepository;

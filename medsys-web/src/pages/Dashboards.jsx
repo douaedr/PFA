@@ -1022,8 +1022,8 @@ export function AdminDashboard() {
     finally { setLoading(false) }
   }
 
-  const roleColor = { ADMIN: '#fee2e2', MEDECIN: '#dbeafe', PERSONNEL: '#d1fae5', PATIENT: '#f3f4f6' }
-  const roleTextColor = { ADMIN: '#991b1b', MEDECIN: '#1e40af', PERSONNEL: '#065f46', PATIENT: '#374151' }
+  const roleColor = { ADMIN: '#fee2e2', MEDECIN: '#dbeafe', PERSONNEL: '#d1fae5', PATIENT: '#f3f4f6', SECRETARY: '#fef3c7', DIRECTEUR: '#ede9fe' }
+  const roleTextColor = { ADMIN: '#991b1b', MEDECIN: '#1e40af', PERSONNEL: '#065f46', PATIENT: '#374151', SECRETARY: '#92400e', DIRECTEUR: '#5b21b6' }
 
   return (
     <div>
@@ -1106,7 +1106,8 @@ export function AdminDashboard() {
                   <label className="form-label">Rôle *</label>
                   <select className="form-select" value={form.role} onChange={e => setForm({...form, role: e.target.value})}>
                     <option value="MEDECIN">Médecin</option>
-                    <option value="PERSONNEL">Personnel</option>
+                    <option value="SECRETARY">Secrétaire médicale</option>
+                    <option value="PERSONNEL">Personnel (infirmier, brancardier…)</option>
                     <option value="ADMIN">Administrateur</option>
                   </select>
                 </div>

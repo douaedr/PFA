@@ -46,7 +46,7 @@ spring:
 
 jwt:
   secret: ${JWT_SECRET:medsys-hospital-jwt-secret-key-2026-very-long-and-secure-string-please-change-in-prod}
-  expiration: ${JWT_EXPIRATION:900000}
+  expiration: 86400000
   refresh-expiration: ${JWT_REFRESH_EXPIRATION:604800000}
 
 # URL du ms-patient pour synchronisation

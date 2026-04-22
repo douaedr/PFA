@@ -245,19 +245,25 @@ public class PatientPortalController {
     @GetMapping("/me/rdv")
     public ResponseEntity<List<RendezVousDTO>> getMyRdv(
             @RequestHeader("Authorization") String authHeader) {
-        Long patientId = extractPatientId(authHeader);
-        return ResponseEntity.ok(rdvProxyService.getRdvPatient(patientId));
+        String token = authHeader.substring(7);
+        Long patientId = jwtService.extractPatientId(token);
+        if (patientId == null) throw new PatientNotFoundException("Token invalide");
+        String email = jwtService.extractCin(token); // subject = email in ms-auth JWT
+        return ResponseEntity.ok(rdvProxyService.getRdvPatient(patientId, email));
     }
 
     @PutMapping("/me/rdv/{id}/annuler")
     public ResponseEntity<?> annulerRdv(
             @RequestHeader("Authorization") String authHeader,
             @PathVariable Long id) {
-        Long patientId = extractPatientId(authHeader);
-        boolean ok = rdvProxyService.annulerRdv(id, patientId);
-        if (ok) return ResponseEntity.ok(Map.of("message", "Rendez-vous annulé"));
-        return ResponseEntity.status(HttpStatus.SERVICE_UNAVAILABLE)
-                .body(Map.of("message", "Service rendez-vous indisponible"));
+        String token = authHeader.substring(7);
+        Long patientId = jwtService.extractPatientId(token);
+        if (patientId == null) throw new PatientNotFoundException("Token invalide");
+        String email = jwtService.extractCin(token);
+        boolean ok = rdvProxyService.annulerRdv(id, patientId, email);
+        if (ok) return ResponseEntity.ok(Map.of("message", "Rendez-vous annulé avec succès"));
+        return ResponseEntity.status(HttpStatus.NOT_FOUND)
+                .body(Map.of("message", "Rendez-vous introuvable ou déjà annulé"));
     }
 
     // ─── Helper ───────────────────────────────────────────────────────────────

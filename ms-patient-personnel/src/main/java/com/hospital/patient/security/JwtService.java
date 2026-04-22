@@ -57,6 +57,22 @@ public class JwtService {
         return extractClaims(token).get("patientId", Long.class);
     }
 
+    public Long extractUserId(String token) {
+        return extractClaims(token).get("userId", Long.class);
+    }
+
+    public Long extractMedecinAssigneId(String token) {
+        return extractClaims(token).get("medecinAssigneId", Long.class);
+    }
+
+    public String extractNom(String token) {
+        Claims c = extractClaims(token);
+        String prenom = c.get("prenom", String.class);
+        String nom = c.get("nom", String.class);
+        if (prenom != null && nom != null) return prenom + " " + nom;
+        return c.getSubject();
+    }
+
     public String extractRole(String token) {
         String role = extractClaims(token).get("role", String.class);
         return role != null ? role : "PATIENT";

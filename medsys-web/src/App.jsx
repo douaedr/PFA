@@ -4,7 +4,7 @@ import LandingPage from './pages/LandingPage'
 import PersonnelLoginPage from './pages/PersonnelLoginPage'
 import PatientPortalPage from './pages/PatientPortalPage'
 import ResetPasswordPage from './pages/ResetPasswordPage'
-import { PatientDashboard, PersonnelDashboard, AdminDashboard, DirecteurDashboard } from './pages/Dashboards'
+import { PatientDashboard, PersonnelDashboard, AdminDashboard, DirecteurDashboard, SecretaireDashboard } from './pages/Dashboards'
 
 function ProtectedRoute({ children, allowedRoles }) {
   const { user, isAuthenticated } = useAuth()
@@ -27,8 +27,13 @@ function AppRoutes() {
         </ProtectedRoute>
       } />
       <Route path="/personnel/dashboard" element={
-        <ProtectedRoute allowedRoles={['MEDECIN', 'DOCTOR', 'PERSONNEL', 'SECRETARY']}>
+        <ProtectedRoute allowedRoles={['MEDECIN', 'DOCTOR', 'PERSONNEL']}>
           <PersonnelDashboard />
+        </ProtectedRoute>
+      } />
+      <Route path="/secretaire/dashboard" element={
+        <ProtectedRoute allowedRoles={['SECRETARY']}>
+          <SecretaireDashboard />
         </ProtectedRoute>
       } />
       <Route path="/admin" element={

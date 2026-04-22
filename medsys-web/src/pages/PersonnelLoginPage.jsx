@@ -33,6 +33,7 @@ export default function PersonnelLoginPage() {
       login(data, data.token)
       if (data.role === 'ADMIN') navigate('/admin')
       else if (data.role === 'DIRECTEUR') navigate('/directeur')
+      else if (data.role === 'SECRETARY') navigate('/secretaire/dashboard')
       else navigate('/personnel/dashboard')
     } catch (err) {
       setError(err.response?.data?.message || 'Identifiants incorrects')

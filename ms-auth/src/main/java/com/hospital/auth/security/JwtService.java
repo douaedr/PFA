@@ -34,6 +34,7 @@ public class JwtService {
         claims.put("prenom", user.getPrenom());
         if (user.getPatientId() != null) claims.put("patientId", user.getPatientId());
         if (user.getPersonnelId() != null) claims.put("personnelId", user.getPersonnelId());
+        if (user.getMedecinAssigneId() != null) claims.put("medecinAssigneId", user.getMedecinAssigneId());
 
         return Jwts.builder()
                 .claims(claims)

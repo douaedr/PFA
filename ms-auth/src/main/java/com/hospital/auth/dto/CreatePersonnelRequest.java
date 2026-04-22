@@ -29,4 +29,7 @@ public class CreatePersonnelRequest {
     private Role role;
 
     private Long personnelId;
+
+    // For SECRETARY role: the doctor this secretary is assigned to manage
+    private Long medecinAssigneId;
 }

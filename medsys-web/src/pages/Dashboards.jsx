@@ -1,7 +1,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { useAuth } from '../context/AuthContext'
-import { patientApi, adminApi, directeurApi } from '../api/api'
+import { patientApi, adminApi, directeurApi, secretaireApi } from '../api/api'
 
 // ── Navbar partagée ─────────────────────────────────────────────────────────
 function Navbar({ role, notifCount = 0 }) {
@@ -1689,6 +1689,271 @@ export function DirecteurDashboard() {
           <div>
             <h2 style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 20, marginBottom: 16 }}>📅 Rendez-vous & Planning</h2>
             <DirecteurRdvSection />
+          </div>
+        )}
+
+        <div style={{ height: 40 }} />
+      </div>
+    </div>
+  )
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// SECRETAIRE DASHBOARD
+// ═══════════════════════════════════════════════════════════════════════════
+
+function SlotForm({ onSaved }) {
+  const today = new Date().toISOString().split('T')[0]
+  const [form, setForm] = useState({ slotDate: today, startTime: '08:00', endTime: '09:00', raison: '' })
+  const [saving, setSaving] = useState(false)
+  const [error, setError] = useState('')
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    if (form.endTime <= form.startTime) { setError("L'heure de fin doit être après l'heure de début."); return }
+    setSaving(true); setError('')
+    try {
+      await secretaireApi.bloquerCreneau(form)
+      onSaved()
+    } catch (err) { setError(err.response?.data?.message || 'Erreur lors du blocage.') }
+    finally { setSaving(false) }
+  }
+
+  return (
+    <div className="card" style={{ padding: 20, marginBottom: 20, background: '#fff7ed', border: '1px solid #fed7aa' }}>
+      <div style={{ fontFamily: 'Syne', fontWeight: 700, marginBottom: 14 }}>🔒 Bloquer un créneau</div>
+      {error && <div className="alert alert-error" style={{ marginBottom: 10 }}>⚠️ {error}</div>}
+      <form onSubmit={handleSubmit}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: 12, marginBottom: 12 }}>
+          <div className="form-group">
+            <label className="form-label">Date *</label>
+            <input className="form-input" type="date" min={today} value={form.slotDate}
+              onChange={e => setForm(f => ({ ...f, slotDate: e.target.value }))} required />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Début *</label>
+            <input className="form-input" type="time" value={form.startTime}
+              onChange={e => setForm(f => ({ ...f, startTime: e.target.value }))} required />
+          </div>
+          <div className="form-group">
+            <label className="form-label">Fin *</label>
+            <input className="form-input" type="time" value={form.endTime}
+              onChange={e => setForm(f => ({ ...f, endTime: e.target.value }))} required />
+          </div>
+        </div>
+        <div className="form-group" style={{ marginBottom: 14 }}>
+          <label className="form-label">Raison (facultatif)</label>
+          <input className="form-input" value={form.raison} maxLength={200}
+            onChange={e => setForm(f => ({ ...f, raison: e.target.value }))}
+            placeholder="Congé, formation, réunion…" />
+        </div>
+        <button className="btn btn-primary" type="submit" disabled={saving}>
+          {saving ? <span className="spinner" /> : '🔒 Bloquer ce créneau'}
+        </button>
+      </form>
+    </div>
+  )
+}
+
+function SlotsTable({ slots, onDelete }) {
+  if (!slots.length) return <EmptyState icon="📅" label="Aucun créneau bloqué pour ce médecin." />
+  const fmtDate = (d) => d ? new Date(d + 'T00:00:00').toLocaleDateString('fr-FR', { weekday: 'short', day: '2-digit', month: 'short', year: 'numeric' }) : '—'
+  return (
+    <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+      <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+        <thead>
+          <tr style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
+            {['Date', 'Début', 'Fin', 'Raison', 'Bloqué par', ''].map(h => (
+              <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, color: 'var(--gray)', fontWeight: 600 }}>{h}</th>
+            ))}
+          </tr>
+        </thead>
+        <tbody>
+          {slots.map((s, i) => (
+            <tr key={s.id} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'white' : '#fafafa' }}>
+              <td style={{ padding: '10px 14px', fontWeight: 600 }}>{fmtDate(s.slotDate)}</td>
+              <td style={{ padding: '10px 14px' }}>{s.startTime}</td>
+              <td style={{ padding: '10px 14px' }}>{s.endTime}</td>
+              <td style={{ padding: '10px 14px' }}>{s.raison || <span style={{ color: 'var(--gray)', fontStyle: 'italic' }}>—</span>}</td>
+              <td style={{ padding: '10px 14px', fontSize: 12, color: 'var(--gray)' }}>{s.secretaireNom || '—'}</td>
+              <td style={{ padding: '10px 14px' }}>
+                <button onClick={() => onDelete(s.id)}
+                  style={{ background: '#fee2e2', border: 'none', borderRadius: 6, padding: '4px 10px', color: '#991b1b', cursor: 'pointer', fontSize: 11 }}>
+                  Débloquer
+                </button>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  )
+}
+
+export function SecretaireDashboard() {
+  const { user } = useAuth()
+  const [info, setInfo] = useState(null)
+  const [slots, setSlots] = useState([])
+  const [view, setView] = useState('planning')
+  const [showForm, setShowForm] = useState(false)
+  const [loading, setLoading] = useState(false)
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
+  const [patients, setPatients] = useState([])
+  const [patSearch, setPatSearch] = useState('')
+  const [patLoading, setPatLoading] = useState(false)
+
+  const loadInfo = async () => {
+    try { const r = await secretaireApi.getInfo(); setInfo(r.data) } catch {}
+  }
+
+  const loadSlots = async () => {
+    setLoading(true)
+    try { const r = await secretaireApi.getSlotsForDoctor(); setSlots(r.data || []) }
+    catch { setError('Impossible de charger les créneaux bloqués.') }
+    finally { setLoading(false) }
+  }
+
+  const loadPatients = async (q = '') => {
+    setPatLoading(true)
+    try {
+      const r = q.trim()
+        ? await patientApi.search(q, { page: 0, size: 20 })
+        : await patientApi.getAll({ page: 0, size: 20 })
+      setPatients(r.data.content || [])
+    } catch { setError('Impossible de charger les patients.') }
+    finally { setPatLoading(false) }
+  }
+
+  useEffect(() => { loadInfo(); loadSlots(); loadPatients() }, [])
+
+  const handleDelete = async (id) => {
+    if (!window.confirm('Débloquer ce créneau ?')) return
+    try {
+      await secretaireApi.supprimerCreneau(id)
+      setSuccess('Créneau débloqué.'); loadSlots()
+      setTimeout(() => setSuccess(''), 3000)
+    } catch (err) { setError(err.response?.data?.message || 'Erreur.') }
+  }
+
+  const handleSlotSaved = () => {
+    setShowForm(false)
+    setSuccess('Créneau bloqué avec succès !')
+    loadSlots()
+    setTimeout(() => setSuccess(''), 3000)
+  }
+
+  const navItems = [
+    { key: 'planning', label: '📅 Planning médecin' },
+    { key: 'patients', label: '👥 Patients' },
+  ]
+
+  return (
+    <div>
+      <Navbar role="Secrétaire médicale" />
+      <div className="container">
+        <div style={{ padding: '40px 0 20px' }}>
+          <h1 style={{ fontFamily: 'Syne', fontSize: 28, fontWeight: 800 }}>
+            Bonjour, {user?.prenom} 🗓️
+          </h1>
+          <p style={{ color: 'var(--gray)', marginTop: 4 }}>
+            Espace secrétariat médical
+            {info?.medecinAssigneId > 0 && (
+              <span style={{ marginLeft: 10, background: '#dbeafe', color: '#1e40af', borderRadius: 6, padding: '2px 10px', fontSize: 12, fontWeight: 600 }}>
+                Médecin assigné : ID {info.medecinAssigneId}
+              </span>
+            )}
+          </p>
+        </div>
+
+        {error && <div className="alert alert-error" style={{ marginBottom: 12 }}>⚠️ {error}</div>}
+        {success && <div className="alert alert-success" style={{ marginBottom: 12 }}>✅ {success}</div>}
+
+        {info?.medecinAssigneId === 0 && (
+          <div className="alert alert-warning" style={{ marginBottom: 16 }}>
+            ⚠️ Aucun médecin ne vous est assigné. Contactez l'administrateur pour configurer votre compte.
+          </div>
+        )}
+
+        <div style={{ display: 'flex', gap: 6, marginBottom: 24 }}>
+          {navItems.map(t => (
+            <button key={t.key} onClick={() => setView(t.key)}
+              style={{ padding: '8px 18px', border: 'none', borderRadius: 20, cursor: 'pointer', fontSize: 13,
+                background: view === t.key ? '#2563eb' : '#f3f4f6',
+                color: view === t.key ? 'white' : '#374151', fontWeight: view === t.key ? 700 : 400 }}>
+              {t.label}
+            </button>
+          ))}
+        </div>
+
+        {view === 'planning' && (
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 16 }}>
+              <h2 style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 20 }}>
+                📅 Créneaux bloqués — {slots.length} enregistré{slots.length !== 1 ? 's' : ''}
+              </h2>
+              <button className="btn btn-primary" onClick={() => setShowForm(f => !f)} style={{ fontSize: 13 }}>
+                {showForm ? '✕ Annuler' : '🔒 Bloquer un créneau'}
+              </button>
+            </div>
+            {showForm && <SlotForm onSaved={handleSlotSaved} />}
+            {loading
+              ? <div style={{ textAlign: 'center', padding: 40 }}><span className="spinner" /></div>
+              : <SlotsTable slots={slots} onDelete={handleDelete} />
+            }
+          </div>
+        )}
+
+        {view === 'patients' && (
+          <div>
+            <h2 style={{ fontFamily: 'Syne', fontWeight: 700, fontSize: 20, marginBottom: 16 }}>👥 Patients</h2>
+            <form onSubmit={e => { e.preventDefault(); loadPatients(patSearch) }}
+              style={{ display: 'flex', gap: 8, marginBottom: 16 }}>
+              <input className="form-input" value={patSearch}
+                onChange={e => setPatSearch(e.target.value)}
+                placeholder="Rechercher par nom, prénom ou CIN..." style={{ flex: 1 }} />
+              <button type="submit" className="btn btn-primary">🔍 Rechercher</button>
+              {patSearch && <button type="button" className="btn btn-outline" onClick={() => { setPatSearch(''); loadPatients('') }}>✕</button>}
+            </form>
+            {patLoading
+              ? <div style={{ textAlign: 'center', padding: 40 }}><span className="spinner" /></div>
+              : patients.length === 0 ? <EmptyState icon="👥" label="Aucun patient trouvé." />
+              : (
+                <div className="card" style={{ padding: 0, overflow: 'hidden' }}>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: 13 }}>
+                    <thead>
+                      <tr style={{ background: '#f8fafc', borderBottom: '2px solid var(--border)' }}>
+                        {['Nom complet', 'CIN', 'Téléphone', 'Ville', 'N° Dossier'].map(h => (
+                          <th key={h} style={{ padding: '10px 14px', textAlign: 'left', fontSize: 11, color: 'var(--gray)', fontWeight: 600 }}>{h}</th>
+                        ))}
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {patients.map((p, i) => (
+                        <tr key={p.id} style={{ borderBottom: '1px solid var(--border)', background: i % 2 === 0 ? 'white' : '#fafafa' }}>
+                          <td style={{ padding: '10px 14px', fontWeight: 600 }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                              <div style={{ width: 30, height: 30, borderRadius: '50%', background: '#fef3c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 11, fontWeight: 700 }}>
+                                {p.prenom?.[0]}{p.nom?.[0]}
+                              </div>
+                              {p.prenom} {p.nom}
+                            </div>
+                          </td>
+                          <td style={{ padding: '10px 14px' }}>{p.cin}</td>
+                          <td style={{ padding: '10px 14px' }}>{p.telephone || '—'}</td>
+                          <td style={{ padding: '10px 14px' }}>{p.ville || '—'}</td>
+                          <td style={{ padding: '10px 14px' }}>
+                            <span style={{ background: '#d1fae5', color: '#065f46', fontSize: 11, borderRadius: 6, padding: '2px 8px', fontWeight: 600 }}>
+                              {p.numeroDossier || '—'}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )
+            }
           </div>
         )}
 

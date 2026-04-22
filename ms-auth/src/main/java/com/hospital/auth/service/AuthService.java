@@ -182,6 +182,7 @@ public class AuthService {
                 .prenom(req.getPrenom())
                 .cin(req.getCin())
                 .personnelId(req.getPersonnelId())
+                .medecinAssigneId(req.getMedecinAssigneId())
                 .enabled(true)
                 .emailVerified(true)   // admin-created accounts are pre-verified
                 .emailVerificationToken(null)

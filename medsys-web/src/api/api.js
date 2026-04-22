@@ -83,4 +83,17 @@ export const adminApi = {
   listByRole: (role) => ADMIN_API.get(`/users/role/${role}`),
   toggleUser: (id) => ADMIN_API.put(`/users/${id}/toggle`),
   deleteUser: (id) => ADMIN_API.delete(`/users/${id}`),
+  assignerMedecin: (secretaireId, medecinId) =>
+    ADMIN_API.put(`/users/${secretaireId}/assigner-medecin/${medecinId}`),
+}
+
+export const secretaireApi = {
+  getInfo: () => PATIENT_API.get('/secretaire/info'),
+  getSlotsForDoctor: () => PATIENT_API.get('/secretaire/slots'),
+  getSlotsSemaine: (dateDebut) =>
+    PATIENT_API.get('/secretaire/slots/semaine', { params: dateDebut ? { dateDebut } : {} }),
+  bloquerCreneau: (data, doctorName) =>
+    PATIENT_API.post('/secretaire/slots/bloquer', data,
+      { params: doctorName ? { doctorName } : {} }),
+  supprimerCreneau: (id) => PATIENT_API.delete(`/secretaire/slots/${id}`),
 }

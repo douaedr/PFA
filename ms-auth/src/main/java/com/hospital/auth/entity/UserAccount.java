@@ -38,6 +38,9 @@ public class UserAccount {
     // Reference to ms-personnel (for MEDECIN/PERSONNEL/DOCTOR/SECRETARY roles)
     private Long personnelId;
 
+    // For SECRETARY role: ID of the doctor this secretary is assigned to manage
+    private Long medecinAssigneId;
+
     @Column(nullable = false)
     private String nom;
 

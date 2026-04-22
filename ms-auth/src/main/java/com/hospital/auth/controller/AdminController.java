@@ -61,4 +61,22 @@ public class AdminController {
         userRepo.deleteById(id);
         return ResponseEntity.noContent().build();
     }
+
+    // PUT /api/v1/admin/users/{secretaireId}/assigner-medecin/{medecinId}
+    @PutMapping("/users/{secretaireId}/assigner-medecin/{medecinId}")
+    public ResponseEntity<Map<String, String>> assignerMedecin(
+            @PathVariable Long secretaireId,
+            @PathVariable Long medecinId) {
+        UserAccount secretaire = userRepo.findById(secretaireId)
+                .orElseThrow(() -> new RuntimeException("Secrétaire introuvable"));
+        if (!Role.SECRETARY.equals(secretaire.getRole())) {
+            return ResponseEntity.badRequest()
+                    .body(Map.of("message", "Cet utilisateur n'est pas une secrétaire"));
+        }
+        secretaire.setMedecinAssigneId(medecinId);
+        userRepo.save(secretaire);
+        return ResponseEntity.ok(Map.of(
+                "message", "Secrétaire " + secretaire.getPrenom() + " " + secretaire.getNom()
+                           + " assignée au médecin id=" + medecinId));
+    }
 }

@@ -163,7 +163,7 @@ DB_USERNAME=root
 DB_PASSWORD=
 
 # JWT (OBLIGATOIRE — même valeur dans les deux services)
-JWT_SECRET=medsys-hospital-jwt-secret-key-2026-very-long-and-secure-string-please-change-in-prod
+JWT_SECRET=DEVONLYCHANGEMEDEVONLYCHANGEMEDEVONLYCHANGEMEDEVONLYCHANGEMEDEVONLYCHANGEMEDEVONLYCHA
 
 # Email (optionnel pour les tests)
 SMTP_USERNAME=votre@gmail.com
